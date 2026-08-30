@@ -33,7 +33,9 @@ interface KeyValueStore {
     fun putString(key: String, value: String)
 }
 
-class SharedPreferencesStore(preferences: SharedPreferences) : KeyValueStore {
+class SharedPreferencesStore(
+    private val preferences: SharedPreferences
+) : KeyValueStore {
     override fun bool(key: String, fallback: Boolean): Boolean =
         preferences.getBoolean(key, fallback)
 
@@ -77,16 +79,14 @@ class InMemoryKeyValueStore : KeyValueStore {
  * theme, Daily) stays in GameProfile's own storage and is untouched here.
  */
 class GameSettingsStore(private val store: KeyValueStore) {
-    private enum Key {
+    private enum class Key(val id: String) {
         MUSIC_ENABLED("settings.music_enabled"),
         SOUND_ENABLED("settings.sound_enabled"),
         HAPTICS_ENABLED("settings.haptics_enabled"),
         REDUCE_MOTION_ENABLED("settings.reduce_motion_enabled"),
         REDUCE_MOTION_INITIALIZED("settings.reduce_motion_initialized"),
         HIGH_CONTRAST_ENABLED("settings.high_contrast_enabled"),
-        LANGUAGE("settings.language");
-
-        val id: String = this.name
+        LANGUAGE("settings.language")
     }
 
     var musicEnabled: Boolean by mutableStateOf(store.bool(Key.MUSIC_ENABLED.id, true))

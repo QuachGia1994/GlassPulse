@@ -424,7 +424,12 @@ struct GlassPulseGame: View {
         .buttonStyle(.plain)
         .foregroundStyle(activeTheme.palette.ring)
         .background(.thinMaterial, in: Circle())
-        .overlay { Circle().stroke(borderColor, lineWidth: 1) }
+        .overlay {
+            Circle().stroke(
+                .white.opacity(settings.highContrastEnabled ? 0.30 : 0.16),
+                lineWidth: 1
+            )
+        }
         .accessibilityLabel(Text("settings.open.label"))
         .accessibilityIdentifier("settings.open")
     }

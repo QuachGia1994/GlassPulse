@@ -129,7 +129,7 @@ class AndroidSfxSink : SfxSink {
         val track = tracks.getOrPut(kind) { createTrack(kind) }
         synchronized(track) {
             track.stop()
-            track.reload()
+            track.reloadStaticData()
             track.play()
         }
     }

@@ -16,9 +16,7 @@
             <gradient
                 android:type="sweep"
                 android:centerX="54"
-                android:centerY="54"
-                android:startAngle="0"
-                android:endAngle="360">
+                android:centerY="54">
                 <item
                     android:offset="0.0"
                     android:color="#FF32ADE6" />
