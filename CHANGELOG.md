@@ -5,6 +5,7 @@ All notable changes to Glass Pulse are recorded here.
 ## [Unreleased]
 
 ### Added
+- Added a playable native Android/Compose mirror with the five iOS modes, deterministic Kotlin engine, full-screen input, Canvas renderer, pause/retry/mode flow, four themes, local progression and Beta Full Access.
 - Added Classic, Rush 60, Precision Pulse, Wave Survival and deterministic Daily Challenge through one `GameEngine` and the original tap-to-reverse control.
 - Added persistent mode selection, completion-based Daily streak, local Daily best and a non-farmable first-clear reward with migration from the old launch streak.
 - Added Precision-only adaptive Core Haptics with capability fallback, throttled proximity parameters, cached procedural audio buffers and interruption/reset handling.

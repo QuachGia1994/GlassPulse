@@ -1,6 +1,6 @@
 # Glass Pulse
 
-Glass Pulse is a one-touch SwiftUI orbit game. One controlled ball moves automatically on one ring; every gameplay mode keeps the same tap-to-reverse control and deterministic simulation engine.
+Glass Pulse is a one-touch orbit game for iOS and Android. One controlled ball moves automatically on one ring; every gameplay mode keeps the same tap-to-reverse control and deterministic simulation engine. SwiftUI/Canvas ships on iOS, while Jetpack Compose/Canvas provides the native Android mirror.
 
 ## Requirements
 
@@ -18,6 +18,16 @@ open GlassPulse.xcodeproj
 ```
 
 The generated `GlassPulse` scheme attaches `Resources/StoreKit.storekit` for local weekly/monthly Plus testing. Strict Concurrency and warnings-as-errors are enabled for the project.
+
+### Android beta APK
+
+The Android mirror lives in `android/` and launches directly into the playable game. It uses the same five modes, one-tap reversal contract, deterministic Daily context, pause/retry/mode flow, themes, shards, best score and Daily streak.
+
+```bash
+./android/gradlew -p android testBetaDebugUnitTest assembleBetaDebug
+```
+
+`betaDebug` opens all modes/themes through the compile-time `BETA_FULL_ACCESS` flag. Successful Android CI runs upload `GlassPulse-android-beta-apk` containing the debug-signed installable `GlassPulse-beta-debug.apk`; the compressed APK must remain below 25 MiB.
 
 ## Modes
 
