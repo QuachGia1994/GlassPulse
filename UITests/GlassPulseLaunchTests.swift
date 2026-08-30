@@ -19,11 +19,10 @@ final class GlassPulseLaunchTests: XCTestCase {
             .matching(identifier: "game.board")
             .firstMatch
         XCTAssertTrue(board.waitForExistence(timeout: 5))
-        expectation(
-            for: NSPredicate(format: "hittable == true"),
-            evaluatedWith: board
-        )
-        waitForExpectations(timeout: 5)
+        let splash = app.descendants(matching: .any)
+            .matching(identifier: "launch.splash")
+            .firstMatch
+        XCTAssertTrue(splash.waitForNonExistence(timeout: 5))
         board.tap()
 
         let pauseButton = app.buttons["game.pause"]
