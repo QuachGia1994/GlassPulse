@@ -29,11 +29,10 @@ class AndroidHapticSink(context: Context) : HapticSink {
         context.getSystemService(Vibrator::class.java)
     }
     private val powerManager = context.getSystemService(PowerManager::class.java)
-    private val primitivesSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
-        vibrator.areAllPrimitivesSupported(
-            VibrationEffect.Composition.PRIMITIVE_CLICK,
-            VibrationEffect.Composition.PRIMITIVE_THUD
-        )
+    private val clickPrimitiveSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+        vibrator.areAllPrimitivesSupported(VibrationEffect.Composition.PRIMITIVE_CLICK)
+    private val thudPrimitiveSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+        vibrator.areAllPrimitivesSupported(VibrationEffect.Composition.PRIMITIVE_THUD)
     private val hasAmplitudeControl = vibrator.hasAmplitudeControl()
     private var proximityActive = false
     private var lastProximityNanos = 0L
@@ -72,7 +71,7 @@ class AndroidHapticSink(context: Context) : HapticSink {
     }
 
     private fun lightEffect(): VibrationEffect = when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && primitivesSupported ->
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && clickPrimitiveSupported ->
             VibrationEffect.startComposition()
                 .addPrimitive(VibrationEffect.Composition.PRIMITIVE_CLICK, 0.58f)
                 .compose()
@@ -81,7 +80,7 @@ class AndroidHapticSink(context: Context) : HapticSink {
     }
 
     private fun strongEffect(): VibrationEffect = when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && primitivesSupported ->
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && thudPrimitiveSupported ->
             VibrationEffect.startComposition()
                 .addPrimitive(VibrationEffect.Composition.PRIMITIVE_THUD, 0.78f)
                 .compose()

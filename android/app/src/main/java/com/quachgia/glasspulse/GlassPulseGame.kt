@@ -1201,6 +1201,9 @@ private fun SettingsSheet(
 ) {
     val settings = controller.settings
     val palette = controller.uiState.activeThemeId.palette()
+    val closeLabel = stringResource(R.string.settings_close_label)
+    val languageLabel = stringResource(R.string.settings_language_label)
+    val languageHint = stringResource(R.string.settings_language_hint)
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = palette.backgroundBottom.copy(alpha = 0.98f),
@@ -1228,7 +1231,9 @@ private fun SettingsSheet(
                 )
                 TextButton(
                     onClick = onDismiss,
-                    modifier = Modifier.testTag("settings.close")
+                    modifier = Modifier
+                        .testTag("settings.close")
+                        .semantics { contentDescription = closeLabel }
                 ) {
                     Text(
                         text = stringResource(R.string.action_close),
@@ -1287,17 +1292,24 @@ private fun SettingsSheet(
                     )
                 }
                 SettingsSection(R.string.settings_section_language, palette) {
-                    AppLanguage.entries.forEach { language ->
-                        LanguageOption(
-                            tag = "settings.language." + (language.tag ?: "system"),
-                            label = languageOptionLabel(language),
-                            selected = settings.language == language,
-                            palette = palette,
-                            onSelect = {
-                                settings.updateLanguage(language)
-                                controller.applyMusicSettings()
-                            }
-                        )
+                    Column(
+                        modifier = Modifier.semantics {
+                            contentDescription = "$languageLabel. $languageHint"
+                        },
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        AppLanguage.entries.forEach { language ->
+                            LanguageOption(
+                                tag = "settings.language." + (language.tag ?: "system"),
+                                label = languageOptionLabel(language),
+                                selected = settings.language == language,
+                                palette = palette,
+                                onSelect = {
+                                    settings.updateLanguage(language)
+                                    controller.applyMusicSettings()
+                                }
+                            )
+                        }
                     }
                 }
                 SettingsSection(R.string.settings_section_credit, palette) {
