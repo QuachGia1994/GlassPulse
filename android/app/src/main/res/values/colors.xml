@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="glass_background">#080B12</color>
-    <color name="glass_surface">#131A28</color>
     <color name="glass_accent">#79E8FF</color>
-    <color name="glass_on_background">#F1F7FF</color>
     <color name="icon_background">#080B12</color>
 </resources>
