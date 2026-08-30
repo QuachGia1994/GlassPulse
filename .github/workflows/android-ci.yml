@@ -53,6 +53,15 @@ jobs:
             testBetaDebugUnitTest \
             assembleBetaDebugAndroidTest
 
+      - name: Upload lint reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: GlassPulse-android-lint-reports
+          path: android/app/build/reports/lint-results-*
+          if-no-files-found: ignore
+          retention-days: 7
+
   package:
     name: Package beta APK
     needs: quality
