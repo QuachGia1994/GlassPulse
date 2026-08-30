@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Glass Pulse</string>
+    <string name="android_scaffold_title">Android ベータ基盤</string>
+    <string name="android_scaffold_body">ネイティブ Compose シェルの準備ができました。ゲームプレイは次のステージで移植します。</string>
+    <string name="android_channel_label">ビルドチャンネル</string>
+    <string name="android_beta_access">ベータ全機能アクセス</string>
+    <string name="android_production_access">プロダクションアクセス</string>
+    <string name="android_scope_button">含まれる内容</string>
+    <string name="android_scope_expanded">ステージ 1 にはブランド、ローカライズ、アクセシビリティ、ビルドフレーバー、CI が含まれます。</string>
+    <string name="android_logo_description">Glass Pulse ロゴ</string>
+</resources>

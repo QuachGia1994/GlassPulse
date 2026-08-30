@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Glass Pulse</string>
+    <string name="android_scaffold_title">Android Beta 基础框架</string>
+    <string name="android_scaffold_body">原生 Compose 外壳已就绪。游戏玩法将在下一阶段移植。</string>
+    <string name="android_channel_label">构建渠道</string>
+    <string name="android_beta_access">Beta 全功能访问</string>
+    <string name="android_production_access">正式版访问</string>
+    <string name="android_scope_button">包含内容</string>
+    <string name="android_scope_expanded">第 1 阶段包含品牌、本地化、无障碍、构建变体和 CI。</string>
+    <string name="android_logo_description">Glass Pulse 标志</string>
+</resources>

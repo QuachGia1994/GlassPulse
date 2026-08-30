@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Glass Pulse</string>
+    <string name="android_scaffold_title">Android beta foundation</string>
+    <string name="android_scaffold_body">Native Compose shell is ready. Gameplay arrives in the next stage.</string>
+    <string name="android_channel_label">Build channel</string>
+    <string name="android_beta_access">Beta full access</string>
+    <string name="android_production_access">Production access</string>
+    <string name="android_scope_button">What’s included</string>
+    <string name="android_scope_expanded">Stage 1 includes branding, localization, accessibility, build flavors, and CI.</string>
+    <string name="android_logo_description">Glass Pulse logo</string>
+</resources>

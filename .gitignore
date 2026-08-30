@@ -5,3 +5,14 @@ GlassPulse.xcodeproj/
 Resources/Info.plist
 *.xcuserstate
 xcuserdata/
+
+# Android
+android/.gradle/
+android/.idea/
+android/**/build/
+android/local.properties
+android/*.iml
+*.apk
+*.aab
+*.jks
+*.keystore

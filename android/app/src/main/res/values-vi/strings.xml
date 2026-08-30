@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Glass Pulse</string>
+    <string name="android_scaffold_title">Nền tảng beta Android</string>
+    <string name="android_scaffold_body">Khung Compose native đã sẵn sàng. Gameplay sẽ được port ở stage tiếp theo.</string>
+    <string name="android_channel_label">Kênh build</string>
+    <string name="android_beta_access">Beta mở toàn bộ quyền truy cập</string>
+    <string name="android_production_access">Quyền truy cập production</string>
+    <string name="android_scope_button">Bao gồm những gì</string>
+    <string name="android_scope_expanded">Stage 1 gồm branding, bản dịch, accessibility, build flavor và CI.</string>
+    <string name="android_logo_description">Logo Glass Pulse</string>
+</resources>

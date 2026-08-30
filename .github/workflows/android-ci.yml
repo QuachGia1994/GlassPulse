@@ -1,0 +1,108 @@
+name: Android CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "android/**"
+      - ".github/workflows/android-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "android/**"
+      - ".github/workflows/android-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: glass-pulse-android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Android quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 36
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Lint and unit tests
+        run: |
+          chmod +x android/gradlew
+          ./android/gradlew -p android \
+            lintProductionDebug \
+            testProductionDebugUnitTest \
+            testBetaDebugUnitTest \
+            assembleBetaDebugAndroidTest
+
+  package:
+    name: Package beta APK
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 36
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Assemble beta debug APK
+        run: |
+          chmod +x android/gradlew
+          ./android/gradlew -p android assembleBetaDebug
+
+      - name: Verify signed APK and size
+        run: |
+          set -euo pipefail
+          apk="android/app/build/outputs/apk/beta/debug/app-beta-debug.apk"
+          output="android/app/build/outputs/apk/beta/debug/GlassPulse-beta-debug.apk"
+          test -s "$apk"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$apk"
+          size="$(stat -c%s "$apk")"
+          echo "APK size: $size bytes"
+          if (( size >= 25 * 1024 * 1024 )); then
+            echo "ERROR: APK must remain below 25 MiB."
+            exit 1
+          fi
+          sha256sum "$apk"
+          cp "$apk" "$output"
+          sha256sum "$output"
+
+      - name: Upload beta APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: GlassPulse-android-beta-apk
+          path: android/app/build/outputs/apk/beta/debug/GlassPulse-beta-debug.apk
+          if-no-files-found: error
