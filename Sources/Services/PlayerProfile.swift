@@ -76,11 +76,11 @@ final class PlayerProfile {
         guard !access.isBetaFullAccess else { return true }
         switch theme.unlock {
         case .free:
-            true
+            return true
         case .shards:
-            ownedThemeIDs.contains(theme.id)
+            return ownedThemeIDs.contains(theme.id)
         case .plus:
-            access.hasPlus
+            return access.hasPlus
         }
     }
 
