@@ -83,6 +83,7 @@ struct ThemePickerView: View {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .stroke(selected ? theme.palette.ring : .white.opacity(0.08), lineWidth: selected ? 2 : 1)
         }
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("theme.card.\(theme.id)")
     }
 
@@ -107,6 +108,7 @@ struct ThemePickerView: View {
                 .padding(.vertical, 7)
                 .background(.white.opacity(0.12), in: Capsule())
                 .overlay { Capsule().stroke(theme.palette.ring.opacity(0.9), lineWidth: 1) }
+                .accessibilityLabel("Đang dùng \(theme.title)")
                 .accessibilityIdentifier("theme.selected")
         } else {
             Button(actionTitle(for: theme)) {
