@@ -21,6 +21,7 @@ All notable changes to Glass Pulse are recorded here.
 - Shortened the startup splash, removed its artificial spinner and added Reduce Motion handling.
 - Made the main board layout safe-area aware, added a prominent Mode entry and reduced unused vertical space.
 - Reworked Theme selection for compact navigation, Dynamic Type wrapping and a readable selected-state chip.
+- Aligned Android gameplay chrome with the iOS visual hierarchy: centered board rhythm, theme-driven glass surfaces, compact status actions, filled footer controls, anchored sheet headers and a custom Beta access dialog.
 - CI now records Xcode build timing and enforces a strict 25 MiB ceiling for the compressed IPA, uncompressed app and each extension.
 
 ### Fixed

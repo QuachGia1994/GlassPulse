@@ -65,15 +65,21 @@ fun PulseThemeId.palette(): PulsePalette = when (this) {
 }
 
 @Composable
-fun GlassPulseTheme(content: @Composable () -> Unit) {
+fun GlassPulseTheme(
+    palette: PulsePalette = PulseThemeId.CLARITY.palette(),
+    content: @Composable () -> Unit
+) {
     val colors = darkColorScheme(
-        primary = Color(0xFF5CE0FF),
-        secondary = Color(0xFFBA8FFF),
-        background = Color(0xFF02040F),
-        surface = Color(0xFF1B202A),
-        onPrimary = Color(0xFF02040F),
+        primary = palette.ring,
+        secondary = palette.gem,
+        background = palette.backgroundBottom,
+        surface = palette.backgroundTop.copy(alpha = 1f),
+        surfaceVariant = palette.glassSurface.copy(alpha = 1f),
+        onPrimary = palette.backgroundBottom,
+        onSecondary = palette.backgroundBottom,
         onBackground = Color(0xFFF5F7FF),
-        onSurface = Color(0xFFF5F7FF)
+        onSurface = Color(0xFFF5F7FF),
+        onSurfaceVariant = Color(0xFFD8D6DE)
     )
     MaterialTheme(
         colorScheme = colors,

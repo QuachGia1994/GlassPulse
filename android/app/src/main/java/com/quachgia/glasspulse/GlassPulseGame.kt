@@ -1,6 +1,7 @@
 package com.quachgia.glasspulse
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -26,8 +28,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -69,6 +71,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import kotlin.math.ceil
 import kotlin.math.cos
 import kotlin.math.max
@@ -96,7 +99,11 @@ fun GlassPulseGame(controller: GameController) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(palette.backgroundTop, palette.backgroundBottom)))
+                .background(
+                    Brush.radialGradient(
+                        listOf(palette.backgroundTop, palette.backgroundBottom)
+                    )
+                )
                 .padding(innerPadding)
         ) {
             GameplayInputSurface(
@@ -135,7 +142,7 @@ fun GlassPulseGame(controller: GameController) {
         )
     }
     if (showAccess) {
-        AccessDialog(uiState.betaFullAccess) { showAccess = false }
+        AccessDialog(uiState.betaFullAccess, palette) { showAccess = false }
     }
 }
 
@@ -195,7 +202,11 @@ private fun GameChrome(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             GameHeader(uiState, palette)
-            Spacer(Modifier.height(8.dp))
+            Spacer(
+                Modifier
+                    .weight(1f)
+                    .heightIn(min = 6.dp)
+            )
             GameBoard(
                 uiState = uiState,
                 controller = controller,
@@ -203,7 +214,11 @@ private fun GameChrome(
                 side = boardSide,
                 onShowModes = onShowModes
             )
-            Spacer(Modifier.weight(1f))
+            Spacer(
+                Modifier
+                    .weight(1f)
+                    .heightIn(min = 6.dp)
+            )
             GameFooter(
                 uiState = uiState,
                 controller = controller,
@@ -254,6 +269,7 @@ private fun GameHeader(
             )
             Text(
                 text = game.score.toString(),
+                color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 38.sp,
                 fontWeight = FontWeight.SemiBold
             )
@@ -272,6 +288,7 @@ private fun Metric(label: String, value: Int) {
     ) {
         Text(
             text = value.toString(),
+            color = MaterialTheme.colorScheme.onBackground,
             fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold
         )
@@ -298,7 +315,11 @@ private fun GameBoard(
         modifier = Modifier
             .size(side)
             .clip(RoundedCornerShape(28.dp))
-            .background(palette.glassSurface)
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color.White.copy(alpha = 0.045f), palette.glassSurface)
+                )
+            )
             .border(
                 width = 1.dp,
                 color = Color.White.copy(alpha = 0.14f),
@@ -314,20 +335,29 @@ private fun GameBoard(
             onShowModes = onShowModes
         )
         if (game.state == GameState.PLAYING) {
-            Button(
+            Surface(
                 onClick = controller::pause,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(12.dp)
                     .size(46.dp)
                     .testTag("game.pause"),
-                contentPadding = PaddingValues(0.dp)
+                shape = CircleShape,
+                color = palette.glassSurface.copy(alpha = 0.92f),
+                contentColor = palette.ring,
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.15f)),
+                shadowElevation = 6.dp
             ) {
-                Text(
-                    stringResource(R.string.pause_symbol),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        stringResource(R.string.pause_symbol),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }
@@ -358,14 +388,18 @@ private fun GameCanvas(
 
 @Composable
 private fun StatusCard(
+    palette: PulsePalette,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
     Surface(
-        modifier = modifier.widthIn(max = 310.dp),
-        shape = RoundedCornerShape(22.dp),
-        color = Color(0xE62A282D),
-        tonalElevation = 8.dp,
+        modifier = modifier.widthIn(max = 292.dp),
+        shape = RoundedCornerShape(20.dp),
+        color = palette.glassSurface.copy(alpha = 0.88f),
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.09f)),
+        tonalElevation = 0.dp,
+        shadowElevation = 10.dp,
         content = content
     )
 }
@@ -392,15 +426,15 @@ private fun StatusOverlay(
 
 @Composable
 private fun StartCard(palette: PulsePalette) {
-    StatusCard {
+    StatusCard(palette) {
         Column(
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 stringResource(R.string.game_mark_symbol),
                 color = palette.ring,
-                fontSize = 27.sp
+                fontSize = 24.sp
             )
             Text(
                 text = stringResource(R.string.game_status_start),
@@ -416,9 +450,9 @@ private fun PausedCard(
     controller: GameController,
     palette: PulsePalette
 ) {
-    StatusCard {
+    StatusCard(palette) {
         Column(
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp),
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -429,12 +463,18 @@ private fun PausedCard(
             Button(
                 onClick = controller::resume,
                 modifier = Modifier
-                    .padding(top = 12.dp)
-                    .testTag("game.resume")
+                    .padding(top = 10.dp)
+                    .height(44.dp)
+                    .testTag("game.resume"),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = palette.ring,
+                    contentColor = palette.backgroundBottom
+                )
             ) {
                 Text(
                     text = stringResource(R.string.action_resume),
-                    color = palette.backgroundBottom
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }
@@ -449,11 +489,16 @@ private fun GameOverCard(
     onShowModes: () -> Unit
 ) {
     val completed = uiState.game.runOutcome == GameRunOutcome.COMPLETED
-    StatusCard {
+    StatusCard(palette) {
         Column(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 15.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Text(
+                text = stringResource(R.string.game_mark_symbol),
+                color = palette.ring,
+                fontSize = 22.sp
+            )
             Text(
                 text = stringResource(
                     if (completed) R.string.game_status_completed else R.string.game_status_collision
@@ -462,39 +507,70 @@ private fun GameOverCard(
                 fontSize = 19.sp,
                 fontWeight = FontWeight.Bold
             )
-            Text(
-                text = stringResource(
-                    R.string.game_reward,
-                    uiState.game.rewardForCurrentRun
-                ),
-                modifier = Modifier.padding(top = 5.dp),
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.66f)
-            )
-            if (uiState.dailyBonus > 0) {
-                Text(
-                    text = stringResource(R.string.game_daily_bonus, uiState.dailyBonus),
-                    color = palette.ring,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-            Button(
-                onClick = controller::retry,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp)
-                    .testTag("game.retry")
-            ) {
-                Text(stringResource(R.string.action_retry))
-            }
-            OutlinedButton(
-                onClick = onShowModes,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 6.dp)
-                    .testTag("game.chooseMode")
-            ) {
-                Text(stringResource(R.string.action_choose_mode))
-            }
+            GameReward(uiState, palette)
+            GameOverActions(controller, palette, onShowModes)
+        }
+    }
+}
+
+@Composable
+private fun GameReward(uiState: GameUiState, palette: PulsePalette) {
+    Text(
+        text = stringResource(R.string.game_reward, uiState.game.rewardForCurrentRun),
+        modifier = Modifier.padding(top = 4.dp),
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.66f)
+    )
+    if (uiState.dailyBonus > 0) {
+        Text(
+            text = stringResource(R.string.game_daily_bonus, uiState.dailyBonus),
+            color = palette.ring,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
+private fun GameOverActions(
+    controller: GameController,
+    palette: PulsePalette,
+    onShowModes: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Button(
+            onClick = controller::retry,
+            modifier = Modifier
+                .weight(1f)
+                .height(44.dp)
+                .testTag("game.retry"),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = palette.ring,
+                contentColor = palette.backgroundBottom
+            ),
+            contentPadding = PaddingValues(horizontal = 8.dp)
+        ) {
+            Text(stringResource(R.string.action_retry), maxLines = 1)
+        }
+        OutlinedButton(
+            onClick = onShowModes,
+            modifier = Modifier
+                .weight(1f)
+                .height(44.dp)
+                .testTag("game.chooseMode"),
+            shape = RoundedCornerShape(14.dp),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.18f)),
+            colors = ButtonDefaults.outlinedButtonColors(
+                containerColor = palette.glassSurface.copy(alpha = 0.8f),
+                contentColor = MaterialTheme.colorScheme.onSurface
+            ),
+            contentPadding = PaddingValues(horizontal = 8.dp)
+        ) {
+            Text(stringResource(R.string.action_choose_mode), maxLines = 1)
         }
     }
 }
@@ -600,18 +676,30 @@ private fun GameFooter(
     onShowThemes: () -> Unit,
     onShowAccess: () -> Unit
 ) {
+    val shape = RoundedCornerShape(14.dp)
+    val border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f))
+    val colors = ButtonDefaults.outlinedButtonColors(
+        containerColor = palette.glassSurface.copy(alpha = 0.88f),
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        disabledContainerColor = palette.glassSurface.copy(alpha = 0.42f),
+        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.30f)
+    )
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         OutlinedButton(
             onClick = onShowModes,
             enabled = controller.canChangeMode(),
             modifier = Modifier
                 .weight(1f)
+                .height(52.dp)
                 .testTag("game.modes"),
+            shape = shape,
+            border = border,
+            colors = colors,
             contentPadding = PaddingValues(horizontal = 8.dp)
         ) {
             Text(stringResource(R.string.footer_mode), maxLines = 1)
@@ -620,7 +708,11 @@ private fun GameFooter(
             onClick = onShowThemes,
             modifier = Modifier
                 .weight(1f)
+                .height(52.dp)
                 .testTag("game.themes"),
+            shape = shape,
+            border = border,
+            colors = colors,
             contentPadding = PaddingValues(horizontal = 8.dp)
         ) {
             Text(stringResource(R.string.footer_theme), color = palette.ring, maxLines = 1)
@@ -629,7 +721,11 @@ private fun GameFooter(
             onClick = onShowAccess,
             modifier = Modifier
                 .weight(1f)
+                .height(52.dp)
                 .testTag("game.access"),
+            shape = shape,
+            border = border,
+            colors = colors,
             contentPadding = PaddingValues(horizontal = 8.dp)
         ) {
             Text(
@@ -650,38 +746,75 @@ private fun ModePickerSheet(
     controller: GameController,
     onDismiss: () -> Unit
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    val palette = uiState.activeThemeId.palette()
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = palette.backgroundBottom.copy(alpha = 0.98f),
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        tonalElevation = 0.dp,
+        scrimColor = Color.Black.copy(alpha = 0.62f)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxHeight(0.92f)
-                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 18.dp)
-                .padding(bottom = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .padding(bottom = 20.dp)
         ) {
-            Text(
-                text = stringResource(R.string.mode_picker_title),
-                modifier = Modifier.semantics { heading() },
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold
-            )
+            SheetHeader(R.string.mode_picker_title, palette, onDismiss)
             if (uiState.betaFullAccess) {
                 Text(
                     text = stringResource(R.string.beta_all_modes_open),
-                    color = MaterialTheme.colorScheme.primary,
+                    color = palette.ring,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold
                 )
             }
-            GameModeId.entries.forEach { modeId ->
-                ModeCard(
-                    modeId = modeId,
-                    selected = uiState.game.session.modeId == modeId,
-                    unlocked = controller.canUseMode(modeId),
-                    onSelect = {
-                        if (controller.selectMode(modeId)) onDismiss()
-                    }
-                )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(top = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                GameModeId.entries.forEach { modeId ->
+                    ModeCard(
+                        modeId = modeId,
+                        selected = uiState.game.session.modeId == modeId,
+                        unlocked = controller.canUseMode(modeId),
+                        onSelect = {
+                            if (controller.selectMode(modeId)) onDismiss()
+                        }
+                    )
+                }
             }
+        }
+    }
+}
+
+@Composable
+private fun SheetHeader(
+    @StringRes title: Int,
+    palette: PulsePalette,
+    onDismiss: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = stringResource(title),
+            modifier = Modifier
+                .weight(1f)
+                .semantics { heading() },
+            fontSize = 28.sp,
+            fontWeight = FontWeight.Bold
+        )
+        TextButton(onClick = onDismiss) {
+            Text(
+                text = stringResource(R.string.action_close),
+                color = palette.ring,
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
@@ -700,9 +833,9 @@ private fun ModeCard(
             .clip(shape)
             .background(
                 if (selected) {
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.11f)
                 } else {
-                    MaterialTheme.colorScheme.surface
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.76f)
                 }
             )
             .border(
@@ -716,13 +849,13 @@ private fun ModeCard(
             )
             .clickable(enabled = unlocked, onClick = onSelect)
             .testTag("mode." + modeId.name.lowercase())
-            .padding(16.dp)
+            .padding(14.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = stringResource(modeId.titleResource()),
                 modifier = Modifier.weight(1f),
-                fontSize = 18.sp,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.Bold
             )
             Text(
@@ -734,18 +867,20 @@ private fun ModeCard(
                     }
                 ),
                 color = MaterialTheme.colorScheme.primary,
+                fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold
             )
         }
         Text(
             text = stringResource(modeId.subtitleResource()),
             modifier = Modifier.padding(top = 5.dp),
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f)
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f),
+            fontSize = 14.sp
         )
         Text(
             text = stringResource(modeId.instructionResource()),
             modifier = Modifier.padding(top = 4.dp),
-            fontSize = 12.sp,
+            fontSize = 11.sp,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.58f)
         )
     }
@@ -758,39 +893,48 @@ private fun ThemePickerSheet(
     controller: GameController,
     onDismiss: () -> Unit
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    val palette = uiState.activeThemeId.palette()
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = palette.backgroundBottom.copy(alpha = 0.98f),
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        tonalElevation = 0.dp,
+        scrimColor = Color.Black.copy(alpha = 0.62f)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxHeight(0.88f)
-                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 18.dp)
-                .padding(bottom = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .padding(bottom = 20.dp)
         ) {
-            Text(
-                text = stringResource(R.string.theme_picker_title),
-                modifier = Modifier.semantics { heading() },
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold
-            )
+            SheetHeader(R.string.theme_picker_title, palette, onDismiss)
             if (uiState.betaFullAccess) {
                 Text(
                     text = stringResource(R.string.beta_all_themes_open),
-                    color = MaterialTheme.colorScheme.primary,
+                    color = palette.ring,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold
                 )
             }
-            PulseThemeId.entries.forEach { themeId ->
-                ThemeCard(
-                    themeId = themeId,
-                    selected = uiState.activeThemeId == themeId,
-                    unlocked = controller.canUseTheme(themeId),
-                    selectable = uiState.betaFullAccess || themeId != PulseThemeId.PRISM_PLUS,
-                    betaFullAccess = uiState.betaFullAccess,
-                    onSelect = {
-                        if (controller.selectTheme(themeId)) onDismiss()
-                    }
-                )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(top = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                PulseThemeId.entries.forEach { themeId ->
+                    ThemeCard(
+                        themeId = themeId,
+                        selected = uiState.activeThemeId == themeId,
+                        unlocked = controller.canUseTheme(themeId),
+                        selectable = uiState.betaFullAccess || themeId != PulseThemeId.PRISM_PLUS,
+                        betaFullAccess = uiState.betaFullAccess,
+                        onSelect = {
+                            if (controller.selectTheme(themeId)) onDismiss()
+                        }
+                    )
+                }
             }
         }
     }
@@ -811,36 +955,44 @@ private fun ThemeCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(MaterialTheme.colorScheme.surface)
+            .background(
+                if (selected) {
+                    palette.glassSurface.copy(alpha = 0.96f)
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.76f)
+                }
+            )
             .border(
-                width = if (selected) 2.dp else 1.dp,
+                width = if (selected) 1.5.dp else 1.dp,
                 color = if (selected) palette.ring else Color.White.copy(alpha = 0.10f),
                 shape = shape
             )
             .clickable(enabled = selectable, onClick = onSelect)
             .testTag("theme." + themeId.name.lowercase())
-            .padding(14.dp),
+            .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         ThemePreview(palette)
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 14.dp)
+                .padding(horizontal = 12.dp)
         ) {
             Text(
                 text = stringResource(themeId.titleResource()),
-                fontSize = 18.sp,
+                fontSize = 17.sp,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = stringResource(themeId.subtitleResource()),
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f),
+                fontSize = 14.sp
             )
         }
         Text(
             text = themeAccessLabel(themeId, selected, unlocked, betaFullAccess),
             color = palette.ring,
+            fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold
         )
     }
@@ -865,7 +1017,7 @@ private fun themeAccessLabel(
 
 @Composable
 private fun ThemePreview(palette: PulsePalette) {
-    Canvas(modifier = Modifier.size(66.dp)) {
+    Canvas(modifier = Modifier.size(58.dp)) {
         val center = Offset(size.width / 2, size.height / 2)
         val radius = size.minDimension * 0.40f
         drawCircle(palette.backgroundBottom, radius)
@@ -885,30 +1037,62 @@ private fun ThemePreview(palette: PulsePalette) {
 @Composable
 private fun AccessDialog(
     betaFullAccess: Boolean,
+    palette: PulsePalette,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                stringResource(
-                    if (betaFullAccess) R.string.beta_access_title else R.string.plus_access_title
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier
+                .widthIn(max = 320.dp)
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            color = palette.glassSurface.copy(alpha = 0.96f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.10f)),
+            tonalElevation = 0.dp,
+            shadowElevation = 16.dp
+        ) {
+            Column(modifier = Modifier.padding(22.dp)) {
+                Text(
+                    text = stringResource(R.string.game_mark_symbol),
+                    color = palette.ring,
+                    fontSize = 24.sp
                 )
-            )
-        },
-        text = {
-            Text(
-                stringResource(
-                    if (betaFullAccess) R.string.beta_access_body else R.string.plus_access_body
+                Text(
+                    text = stringResource(
+                        if (betaFullAccess) {
+                            R.string.beta_access_title
+                        } else {
+                            R.string.plus_access_title
+                        }
+                    ),
+                    modifier = Modifier.padding(top = 5.dp),
+                    fontSize = 23.sp,
+                    fontWeight = FontWeight.Bold
                 )
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_close))
+                Text(
+                    text = stringResource(
+                        if (betaFullAccess) R.string.beta_access_body else R.string.plus_access_body
+                    ),
+                    modifier = Modifier.padding(top = 10.dp),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f),
+                    fontSize = 14.sp
+                )
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(top = 8.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.action_close),
+                        color = palette.ring,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
             }
         }
-    )
+    }
 }
 
 private fun DrawScope.drawGlassPulse(
