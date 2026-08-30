@@ -15,6 +15,16 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
+private const val PROXIMITY_MIN_AMPLITUDE = 64
+private const val PROXIMITY_MAX_AMPLITUDE = 255
+
+internal fun proximityAmplitude(index: Int, bucketCount: Int): Int {
+    require(bucketCount > 1)
+    val boundedIndex = index.coerceIn(0, bucketCount - 1)
+    return PROXIMITY_MIN_AMPLITUDE +
+        boundedIndex * (PROXIMITY_MAX_AMPLITUDE - PROXIMITY_MIN_AMPLITUDE) / (bucketCount - 1)
+}
+
 /**
  * Framework edge for haptics and procedural SFX. Capability-aware with
  * amplitude fallbacks so reverse/collect/collision stay perceptibly distinct.
@@ -100,7 +110,7 @@ class AndroidHapticSink(context: Context) : HapticSink {
             return List(PROXIMITY_BUCKETS) { VibrationEffect.createOneShot(12, 96) }
         }
         return List(PROXIMITY_BUCKETS) { index ->
-            val amplitude = (64 + index * (255 - 64) / (PROXIMITY_BUCKETS - 1)).toByte().toInt()
+            val amplitude = proximityAmplitude(index, PROXIMITY_BUCKETS)
             VibrationEffect.createWaveform(longArrayOf(0, 12), intArrayOf(0, amplitude), -1)
         }
     }

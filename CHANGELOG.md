@@ -33,6 +33,7 @@ All notable changes to Glass Pulse are recorded here.
 - CI now records Xcode build timing and enforces a strict 25 MiB ceiling for the compressed IPA, uncompressed app and each extension.
 
 ### Fixed
+- Fixed an Android cold-launch crash on devices with vibration amplitude control by keeping generated proximity amplitudes in the valid integer range.
 - Fixed Android lint by gating the thud haptic primitive at API 31 while preserving API 30 click support, and by wiring localized Settings descriptions into Compose accessibility semantics.
 - Fixed paused gameplay to expose one primary Resume action while paused board taps remain inert.
 - Fixed App Icon packaging by placing the asset catalog in the XcodeGen resource build phase and added archive checks for `Assets.car`, `CFBundleIcons` and compiled AppIcon metadata.

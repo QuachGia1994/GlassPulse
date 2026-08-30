@@ -237,6 +237,16 @@ class SensoryMappingTest {
         assertEquals(0.10, client.lastProximity!!, 0.0001)
     }
 
+    @Test
+    fun proximityAmplitudesStayWithinVibrationEffectRange() {
+        val amplitudes = (0 until 8).map { index -> proximityAmplitude(index, 8) }
+
+        assertEquals(64, amplitudes.first())
+        assertEquals(255, amplitudes.last())
+        assertTrue(amplitudes.all { amplitude -> amplitude in 0..255 })
+        assertTrue(amplitudes.zipWithNext().all { (left, right) -> left < right })
+    }
+
     private fun newDetectorWithRecorder(): Pair<SensoryEventDetector, RecordingSensoryClient> {
         val recorder = RecordingSensoryClient()
         return SensoryEventDetector(recorder) to recorder
