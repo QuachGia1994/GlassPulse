@@ -27,4 +27,4 @@ All notable changes to Glass Pulse are recorded here.
 - Fixed App Icon packaging by placing the asset catalog in the XcodeGen resource build phase and added archive checks for `Assets.car`, `CFBundleIcons` and compiled AppIcon metadata.
 - Removed the splash logo offscreen drawing group implicated in the device compositing square while keeping device confirmation as a visual gate.
 - Kept intentionally pinned Android API 36 toolchain advisories out of fatal source-quality lint and retained full lint reports from every Android CI run.
-- Fixed Android backup policy, release resource shrinking, adaptive icon qualifiers and monochrome launcher layers reported by strict lint.
+- Fixed Android backup policy for both API 26–30 (`fullBackupContent`) and API 31+ (`dataExtractionRules`), plus release resource shrinking, adaptive icon qualifiers and monochrome launcher layers reported by strict lint.
