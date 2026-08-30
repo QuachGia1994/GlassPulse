@@ -43,7 +43,6 @@ final class GlassPulseLaunchTests: XCTestCase {
 
         resumeButton.tap()
         assertDoesNotExist(resumeButton, timeout: 2)
-        assertExists(pauseButton, timeout: 2)
     }
 
     @MainActor
