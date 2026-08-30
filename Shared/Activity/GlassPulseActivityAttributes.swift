@@ -1,8 +1,8 @@
 import ActivityKit
 import Foundation
 
-struct GlassPulseActivityAttributes: ActivityAttributes {
-    struct ContentState: Codable, Hashable {
+struct GlassPulseActivityAttributes: ActivityAttributes, Sendable {
+    struct ContentState: Codable, Hashable, Sendable {
         let score: Int
         let remainingSeconds: Int?
         let timerEndDate: Date?

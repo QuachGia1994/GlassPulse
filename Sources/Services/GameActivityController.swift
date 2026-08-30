@@ -2,10 +2,19 @@ import ActivityKit
 import Foundation
 import Observation
 
+private struct GameActivityPayload: Sendable {
+    let state: GlassPulseActivityAttributes.ContentState
+    let staleDate: Date?
+
+    var content: ActivityContent<GlassPulseActivityAttributes.ContentState> {
+        ActivityContent(state: state, staleDate: staleDate)
+    }
+}
+
 @MainActor
 @Observable
 final class GameActivityController {
-    @ObservationIgnored private var activity: Activity<GlassPulseActivityAttributes>?
+    @ObservationIgnored private var activityID: String?
     private(set) var lastError: String?
 
     func synchronize(engine: GameEngine, profile: PlayerProfile, now: Date = .now) {
@@ -26,7 +35,7 @@ final class GameActivityController {
         profile: PlayerProfile,
         now: Date = .now
     ) {
-        guard activity != nil else { return }
+        guard activityID != nil else { return }
         update(engine: engine, profile: profile, now: now)
     }
 
@@ -37,17 +46,18 @@ final class GameActivityController {
     ) {
         guard isEligible(engine) else { return }
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
-        guard activity == nil else {
+        guard activityID == nil else {
             update(engine: engine, profile: profile, now: now)
             return
         }
 
         do {
-            activity = try Activity.request(
+            let requestedActivity = try Activity.request(
                 attributes: attributes(for: engine),
-                content: content(engine: engine, profile: profile, now: now),
+                content: payload(engine: engine, profile: profile, now: now).content,
                 pushType: nil
             )
+            activityID = requestedActivity.id
             lastError = nil
         } catch {
             lastError = error.localizedDescription
@@ -59,10 +69,10 @@ final class GameActivityController {
         profile: PlayerProfile,
         now: Date
     ) {
-        guard let activity else { return }
-        let content = content(engine: engine, profile: profile, now: now)
+        guard let activityID else { return }
+        let payload = payload(engine: engine, profile: profile, now: now)
         Task {
-            await activity.update(content)
+            await Self.updateActivity(id: activityID, payload: payload)
         }
     }
 
@@ -71,11 +81,11 @@ final class GameActivityController {
         profile: PlayerProfile,
         now: Date
     ) {
-        guard let activity else { return }
-        let content = content(engine: engine, profile: profile, now: now)
-        self.activity = nil
+        guard let activityID else { return }
+        let payload = payload(engine: engine, profile: profile, now: now)
+        self.activityID = nil
         Task {
-            await activity.end(content, dismissalPolicy: .immediate)
+            await Self.endActivity(id: activityID, payload: payload)
         }
     }
 
@@ -93,11 +103,11 @@ final class GameActivityController {
         )
     }
 
-    private func content(
+    private func payload(
         engine: GameEngine,
         profile: PlayerProfile,
         now: Date
-    ) -> ActivityContent<GlassPulseActivityAttributes.ContentState> {
+    ) -> GameActivityPayload {
         let remainingSeconds = engine.remainingTime.map { max(0, Int(ceil($0))) }
         let timerEndDate = engine.state == .playing
             ? engine.remainingTime.map { now.addingTimeInterval($0) }
@@ -110,6 +120,26 @@ final class GameActivityController {
             localDailyBest: profile.dailyBest(for: engine.session.dailyKey),
             isPaused: engine.state == .paused
         )
-        return ActivityContent(state: state, staleDate: timerEndDate)
+        return GameActivityPayload(state: state, staleDate: timerEndDate)
+    }
+
+    nonisolated private static func updateActivity(
+        id: String,
+        payload: GameActivityPayload
+    ) async {
+        guard let activity = Activity<GlassPulseActivityAttributes>.activities.first(
+            where: { $0.id == id }
+        ) else { return }
+        await activity.update(payload.content)
+    }
+
+    nonisolated private static func endActivity(
+        id: String,
+        payload: GameActivityPayload
+    ) async {
+        guard let activity = Activity<GlassPulseActivityAttributes>.activities.first(
+            where: { $0.id == id }
+        ) else { return }
+        await activity.end(payload.content, dismissalPolicy: .immediate)
     }
 }
