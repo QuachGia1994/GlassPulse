@@ -53,6 +53,8 @@ android {
         abortOnError = true
         warningsAsErrors = true
         checkReleaseBuilds = false
+        // Stage 1 intentionally targets API 36; keep every other lint warning fatal.
+        disable += "OldTargetApi"
     }
 
     packaging {

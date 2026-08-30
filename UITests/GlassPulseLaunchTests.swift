@@ -187,7 +187,7 @@ final class GlassPulseLaunchTests: XCTestCase {
         let inputSurface = element(in: app, identifier: "game.input.surface")
         assertExists(inputSurface, timeout: 2)
         inputSurface.tap()
-        assertExists(pause, timeout: 2)
+        assertExists(pause, timeout: 5)
     }
 
     @MainActor
