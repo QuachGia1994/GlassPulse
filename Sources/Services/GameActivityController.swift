@@ -15,6 +15,7 @@ private struct GameActivityPayload: Sendable {
 @Observable
 final class GameActivityController {
     @ObservationIgnored private var activityID: String?
+    @ObservationIgnored private var pendingEndTask: Task<Void, Never>?
     private(set) var lastError: String?
 
     func synchronize(engine: GameEngine, profile: PlayerProfile, now: Date = .now) {
@@ -37,6 +38,12 @@ final class GameActivityController {
     ) {
         guard activityID != nil else { return }
         update(engine: engine, profile: profile, now: now)
+    }
+
+    func finishPendingEnd() async {
+        guard let pendingEndTask else { return }
+        await pendingEndTask.value
+        self.pendingEndTask = nil
     }
 
     private func startOrUpdate(
@@ -84,7 +91,7 @@ final class GameActivityController {
         guard let activityID else { return }
         let payload = payload(engine: engine, profile: profile, now: now)
         self.activityID = nil
-        Task {
+        pendingEndTask = Task {
             await Self.endActivity(id: activityID, payload: payload)
         }
     }

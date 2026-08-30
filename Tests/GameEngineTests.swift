@@ -250,6 +250,98 @@ final class GameEngineTests: XCTestCase {
     }
 
     @MainActor
+    func testTapWhileOverDoesNothing() {
+        let scenario = GameScenario(
+            ballAngle: 0,
+            direction: 1,
+            obstacles: [Obstacle(angle: 0.05, width: 0.5, speed: 0)],
+            gem: Gem(angle: .pi)
+        )
+        let engine = GameEngine(seed: 26, scenario: scenario)
+        let start = Date(timeIntervalSinceReferenceDate: 1_200)
+        engine.handleTap(now: start)
+        engine.advance(to: start.addingTimeInterval(0.01))
+        let direction = engine.direction
+        let score = engine.score
+
+        engine.handleTap(now: start.addingTimeInterval(1))
+
+        XCTAssertEqual(engine.state, .over)
+        XCTAssertEqual(engine.direction, direction)
+        XCTAssertEqual(engine.score, score)
+        XCTAssertEqual(engine.runOutcome, .collision)
+    }
+
+    @MainActor
+    func testExplicitReplayStartsCleanRunInSameMode() {
+        let session = GameSessionContext.standard(modeID: .rush60, seed: 27)
+        let collisionScenario = GameScenario(
+            ballAngle: 0,
+            direction: 1,
+            obstacles: [Obstacle(angle: 0.05, width: 0.5, speed: 0)],
+            gem: Gem(angle: .pi)
+        )
+        let ended = GameEngine(scenario: collisionScenario, session: session)
+        let start = Date(timeIntervalSinceReferenceDate: 1_300)
+        ended.handleTap(now: start)
+        ended.advance(to: start.addingTimeInterval(0.01))
+        XCTAssertEqual(ended.state, .over)
+
+        let replay = GameEngine(session: ended.session.replayContext(seed: 30))
+        replay.handleTap(now: start.addingTimeInterval(1))
+
+        XCTAssertEqual(replay.modeID, .rush60)
+        XCTAssertEqual(replay.state, .playing)
+        XCTAssertEqual(replay.score, 0)
+        XCTAssertEqual(replay.combo, 1)
+        XCTAssertEqual(replay.sessionElapsed, 0)
+        XCTAssertEqual(replay.currentWave, 1)
+        XCTAssertNil(replay.runOutcome)
+        XCTAssertNil(replay.gemBurst)
+        XCTAssertNil(replay.collisionEffect)
+        XCTAssertEqual(replay.session.seed, 30)
+    }
+
+    @MainActor
+    func testPausedTapIsNoOpAndResumeClearsClockDelta() {
+        let engine = GameEngine(seed: 28, scenario: safeScenario)
+        let start = Date(timeIntervalSinceReferenceDate: 1_400)
+        engine.handleTap(now: start)
+        engine.advance(to: start.addingTimeInterval(0.10))
+        engine.pause()
+        let pausedAngle = engine.ballAngle
+        let pausedElapsed = engine.sessionElapsed
+
+        engine.handleTap(now: start.addingTimeInterval(100))
+        engine.advance(to: start.addingTimeInterval(100))
+        XCTAssertEqual(engine.state, .paused)
+        XCTAssertEqual(engine.ballAngle, pausedAngle, accuracy: 0.000_001)
+        XCTAssertEqual(engine.sessionElapsed, pausedElapsed, accuracy: 0.000_001)
+
+        engine.resume(at: start.addingTimeInterval(100))
+        engine.advance(to: start.addingTimeInterval(100.10))
+        XCTAssertEqual(engine.sessionElapsed, pausedElapsed + 0.10, accuracy: 0.000_001)
+    }
+
+    func testDailyReplayKeepsDayContextWhileStandardReplayGetsFreshSeed() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try XCTUnwrap(TimeZone(secondsFromGMT: 0))
+        let date = Date(timeIntervalSince1970: 1_800_000_000)
+        let daily = GameSessionContext.daily(date: date, calendar: calendar)
+        let dailyReplay = daily.replayContext(seed: 999)
+        let standard = GameSessionContext.standard(modeID: .classic, seed: 29)
+        let standardReplay = standard.replayContext(seed: 30)
+
+        XCTAssertEqual(dailyReplay, daily)
+        XCTAssertEqual(dailyReplay.dailyKey, daily.dailyKey)
+        XCTAssertEqual(dailyReplay.seed, daily.seed)
+        XCTAssertEqual(standardReplay.modeID, .classic)
+        XCTAssertNil(standardReplay.dailyKey)
+        XCTAssertEqual(standardReplay.seed, 30)
+        XCTAssertNotEqual(standardReplay.seed, standard.seed)
+    }
+
+    @MainActor
     func testTenThousandSeededInitialScenariosRemainSafe() {
         for seed in 0..<10_000 {
             let engine = GameEngine(seed: UInt64(seed))

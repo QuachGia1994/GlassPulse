@@ -6,7 +6,7 @@ Product direction: [product.md](../biz/product.md). Architecture: [architecture.
 
 ## Invariant control
 
-Every shipping mode uses one controlled ball on one orbit. The ball moves automatically; the first tap starts a run and every later gameplay tap reverses direction immediately. Collision with a hazard is fatal. Pause freezes every timer and ignores board taps until Resume resets the frame clock.
+Every shipping mode uses one controlled ball on one orbit. The ball moves automatically; the first gameplay-surface tap starts a run and every later gameplay-surface tap reverses direction exactly once. The gameplay input surface spans the window behind explicit controls, so taps in the empty space around the square board work too. Collision with a hazard is fatal. Pause freezes every timer and ignores background taps until Resume resets the frame clock.
 
 ## Classic
 
@@ -46,6 +46,14 @@ Classic preserves the original deterministic rules and is the regression oracle:
 - Daily streak, Daily best and the first-clear shard bonus update only after `GameRunOutcome.completed`; a collision cannot earn the clear bonus.
 - The first-clear bonus is keyed by day and cannot be farmed by replaying the same Daily.
 - Rankings are local only until a real Game Center/backend exists.
+
+## Post-run flow
+
+- Game-over/completion background taps are inert; there is no implicit revive or checkpoint.
+- `Chơi lại` / Retry creates a new run in the same mode immediately. Standard modes get a fresh seed; Daily reuses the same versioned day context and seed.
+- `Chọn mode` / Choose Mode opens the existing picker. Selecting any mode, including the current one, creates a fresh engine in `.start`; dismissing without selection preserves the ended run.
+- Run rewards are recorded once at the `.over` transition. Daily first-clear bonus remains day-keyed and cannot be farmed by Retry.
+- An ended Live Activity finishes before an eligible replay can start a replacement activity.
 
 ## Access
 

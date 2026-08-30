@@ -31,10 +31,11 @@ Production access is Classic + Daily for free users and Rush/Precision/Wave for 
 
 ## Controls
 
-- Tap the board to start; each later tap reverses direction immediately.
-- Pause uses one 44-point control; paused board taps do nothing and Resume resets the frame clock.
-- Opening Theme/Plus or backgrounding the app pauses an active run.
-- Mode changes are disabled during an active or paused run.
+- Tap anywhere on the gameplay surface to start; each later gameplay tap reverses direction exactly once. The empty space around the square board is interactive too.
+- Explicit controls sit above the gameplay surface and consume their own taps. Pause uses one 44-point control; paused/background taps do nothing and Resume resets the frame clock.
+- After game over/completion, background taps stay inert. Retry starts a fresh run in the same mode; Choose Mode opens the picker and returns the selected mode to `.start`.
+- Daily Retry preserves the same day/version seed and cannot farm the first-clear reward; standard Retry creates a fresh valid session.
+- Opening Theme/Plus or backgrounding the app pauses an active run. Mode changes remain disabled during an active or paused run.
 
 ## Tests
 
@@ -42,7 +43,7 @@ Production access is Classic + Daily for free users and Rush/Precision/Wave for 
 xcodebuild -project GlassPulse.xcodeproj -scheme GlassPulse -destination "platform=iOS Simulator,name=iPhone 17 Pro" test
 ```
 
-CI selects an available iPhone simulator, runs the standard non-Beta build and tests, then creates the separate unsigned Beta archive. Unit coverage includes Classic regression, mode rules, Daily rollover/DST/reward behavior, subscription access, and a 10,000-seed spawn-safety stress pass. UI coverage includes splash dismissal, pause/resume, accessibility-sized theme selection and starting every mode through a debug-only entitlement harness.
+CI selects an available iPhone simulator, runs the standard non-Beta build and tests, then creates the separate unsigned Beta archive. Unit coverage includes Classic regression, mode rules, inert paused/over taps, clean replay session semantics, Daily rollover/DST/reward behavior, subscription access, and a 10,000-seed spawn-safety stress pass. UI coverage includes full-window outside-board input, single reversal semantics, pause/control tap isolation, deterministic game-over Retry/Choose Mode flows, accessibility-sized game-over/theme actions and starting every mode through Debug-only harnesses.
 
 ## Renderer benchmark
 

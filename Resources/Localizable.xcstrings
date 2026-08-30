@@ -1,0 +1,118 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "game.input.direction.clockwise" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Direction: clockwise" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "方向：時計回り" } },
+        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Hướng: thuận chiều" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "方向：顺时针" } }
+      }
+    },
+    "game.input.direction.counterclockwise" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Direction: counterclockwise" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "方向：反時計回り" } },
+        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Hướng: ngược chiều" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "方向：逆时针" } }
+      }
+    },
+    "game.input.hint.over" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Use Retry or Choose Mode. Background taps do nothing." } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "「もう一度」または「モードを選ぶ」を使用してください。背景タップは無効です。" } },
+        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Dùng Chơi lại hoặc Chọn mode. Chạm nền không có tác dụng." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请使用“再玩一次”或“选择模式”。点击背景不会触发操作。" } }
+      }
+    },
+    "game.input.hint.paused" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Use the Resume button to continue. Background taps do nothing." } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "続けるには再開ボタンを使用してください。背景タップは無効です。" } },
+        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Dùng nút Tiếp tục để chơi. Chạm nền không có tác dụng." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请使用继续按钮。点击背景不会触发操作。" } }
+      }
+    },
+    "game.input.hint.playing" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Double-tap to reverse direction once." } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ダブルタップで進行方向を1回反転します。" } },
+        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Chạm hai lần bằng VoiceOver để đảo chiều đúng một lần." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "双击一次以反转方向。" } }
+      }
+    },
+    "game.input.hint.start" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Double-tap to start the selected run." } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ダブルタップで選択中のランを開始します。" } },
+        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Chạm hai lần bằng VoiceOver để bắt đầu lượt chơi đã chọn." } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "双击以开始所选对局。" } }
+      }
+    },
+    "game.input.label" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Gameplay surface" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ゲーム操作エリア" } },
+        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Vùng điều khiển trò chơi" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "游戏操作区域" } }
+      }
+    },
+    "game.metric.shards" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Shards" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "シャード" } },
+        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Shard" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "碎片" } }
+      }
+    },
+    "game.over.chooseMode" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose Mode" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "モードを選ぶ" } },
+        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Chọn mode" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "选择模式" } }
+      }
+    },
+    "game.over.dailyBonus.format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Daily bonus: +%lld" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "デイリーボーナス：+%lld" } },
+        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Thưởng Daily: +%lld" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "每日奖励：+%lld" } }
+      }
+    },
+    "game.over.retry" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Retry" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "もう一度" } },
+        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Chơi lại" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "再玩一次" } }
+      }
+    },
+    "game.over.reward.format" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Reward: +%lld shards" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "報酬：+%lld シャード" } },
+        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Thưởng: +%lld shard" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "奖励：+%lld 碎片" } }
+      }
+    },
+    "game.status.over.collision" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Run over" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ゲームオーバー" } },
+        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Thua rồi" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "游戏结束" } }
+      }
+    },
+    "game.status.over.completed" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Completed" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "クリア" } },
+        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Hoàn thành" } },
+        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已完成" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

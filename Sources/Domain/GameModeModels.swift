@@ -161,6 +161,13 @@ struct GameSessionContext: Equatable, Sendable {
         )
     }
 
+    func replayContext(
+        seed: UInt64 = UInt64.random(in: UInt64.min...UInt64.max)
+    ) -> GameSessionContext {
+        guard modeID != .dailyChallenge else { return self }
+        return .standard(modeID: modeID, seed: seed)
+    }
+
     static func daily(
         date: Date,
         calendar: Calendar

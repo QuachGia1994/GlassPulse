@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 @MainActor
@@ -28,8 +29,10 @@ struct GlassPulseGame: View {
 
             ZStack {
                 background
+                gameplayInputSurface
                 VStack(spacing: 10) {
                     header
+                        .allowsHitTesting(false)
                     Spacer(minLength: 6)
                     gameBoard(side: boardSide)
                     Spacer(minLength: 6)
@@ -44,6 +47,7 @@ struct GlassPulseGame: View {
             engine.connectSensory(sensory.client)
             await plusStore.start()
             applySelectedModeIfIdle()
+            configureUITestHarnessIfNeeded()
         }
         .onChange(of: profile.selectedModeID) { _, _ in
             applySelectedModeIfIdle()
@@ -62,7 +66,7 @@ struct GlassPulseGame: View {
             engine.pause()
         }
         .sheet(isPresented: $showModes) {
-            ModePickerView()
+            ModePickerView(onSelection: selectModeFromPicker)
                 .presentationDetents([.large])
         }
         .sheet(isPresented: $showThemes) {
@@ -73,6 +77,20 @@ struct GlassPulseGame: View {
             PlusView()
                 .presentationDetents([.medium, .large])
         }
+    }
+
+    private var gameplayInputSurface: some View {
+        Button(action: handleGameplaySurfaceTap) {
+            Color.clear
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .ignoresSafeArea()
+        .accessibilityLabel(String(localized: "game.input.label"))
+        .accessibilityValue(directionAccessibilityValue)
+        .accessibilityHint(gameplayInputHint)
+        .accessibilityIdentifier("game.input.surface")
     }
 
     private var background: some View {
@@ -96,6 +114,7 @@ struct GlassPulseGame: View {
                 Text(engine.modeID.title)
                     .font(.caption.weight(.medium))
                     .foregroundStyle(activeTheme.palette.ring)
+                    .accessibilityIdentifier("game.mode.current")
                 Text("\(engine.score)")
                     .font(.system(size: 38, weight: .semibold, design: .rounded))
                     .monospacedDigit()
@@ -105,6 +124,10 @@ struct GlassPulseGame: View {
             metric("KỶ LỤC", value: "\(profile.bestScore)")
             metric("STREAK", value: "\(profile.dailyStreak)")
             metric("SHARD", value: "\(profile.totalShards)")
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(String(localized: "game.metric.shards"))
+                .accessibilityValue("\(profile.totalShards)")
+                .accessibilityIdentifier("game.metric.shards")
         }
         .frame(maxWidth: .infinity)
     }
@@ -116,6 +139,8 @@ struct GlassPulseGame: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .padding(12)
                 .allowsHitTesting(false)
+            statusOverlay
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             if engine.state == .playing {
                 pauseControl
                     .padding(12)
@@ -136,10 +161,8 @@ struct GlassPulseGame: View {
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
                     .stroke(.white.opacity(0.14), lineWidth: 1)
             }
-            .overlay { statusOverlay }
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .onTapGesture { handleGameTap() }
+            .allowsHitTesting(false)
             .accessibilityElement(children: .contain)
             .accessibilityLabel("Vòng chơi Glass Pulse")
             .accessibilityValue("Điểm \(engine.score). \(engine.statusText)")
@@ -215,49 +238,108 @@ struct GlassPulseGame: View {
         case .playing:
             EmptyView()
         case .paused:
-            VStack(spacing: 12) {
-                Text(engine.statusText)
-                    .font(.headline)
-                Button {
-                    engine.resume()
-                } label: {
-                    Label("Tiếp tục", systemImage: "play.fill")
-                        .font(.headline)
-                        .padding(.horizontal, 8)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(activeTheme.palette.ring)
-                .accessibilityIdentifier("game.resume")
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 18)
-            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .transition(.scale.combined(with: .opacity))
-        case .start, .over:
-            VStack(spacing: 8) {
-                Image(systemName: statusIcon)
-                    .font(.title2)
-                    .foregroundStyle(activeTheme.palette.ring)
-                Text(engine.statusText)
-                    .font(.headline)
-                    .multilineTextAlignment(.center)
-                if engine.state == .over {
-                    Text("+\(engine.rewardForCurrentRun) shard")
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                    if dailyBonusForCurrentRun > 0 {
-                        Text("+\(dailyBonusForCurrentRun) Daily bonus")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(activeTheme.palette.ring)
-                    }
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
-            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .allowsHitTesting(false)
-            .transition(.scale.combined(with: .opacity))
+            pausedCard
+        case .start:
+            startCard
+        case .over:
+            gameOverCard
         }
+    }
+
+    private var pausedCard: some View {
+        VStack(spacing: 12) {
+            Text(engine.statusText)
+                .font(.headline)
+            Button {
+                engine.resume()
+            } label: {
+                Label("Tiếp tục", systemImage: "play.fill")
+                    .font(.headline)
+                    .padding(.horizontal, 8)
+                    .frame(minHeight: 44)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(activeTheme.palette.ring)
+            .accessibilityIdentifier("game.resume")
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 18)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .transition(.scale.combined(with: .opacity))
+    }
+
+    private var startCard: some View {
+        VStack(spacing: 8) {
+            Image(systemName: statusIcon)
+                .font(.title2)
+                .foregroundStyle(activeTheme.palette.ring)
+            Text(engine.statusText)
+                .font(.headline)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .allowsHitTesting(false)
+        .transition(.scale.combined(with: .opacity))
+    }
+
+    private var gameOverCard: some View {
+        VStack(spacing: 10) {
+            Image(systemName: statusIcon)
+                .font(.title2)
+                .foregroundStyle(activeTheme.palette.ring)
+            Text(engine.statusText)
+                .font(.headline)
+                .multilineTextAlignment(.center)
+            Text(rewardSummary)
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
+            if dailyBonusForCurrentRun > 0 {
+                Text(dailyBonusSummary)
+                    .font(.caption.weight(.semibold).monospacedDigit())
+                    .foregroundStyle(activeTheme.palette.ring)
+            }
+            gameOverActions
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .transition(.scale.combined(with: .opacity))
+    }
+
+    private var gameOverActions: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) {
+                retryButton
+                chooseModeButton
+            }
+            VStack(spacing: 8) {
+                retryButton
+                chooseModeButton
+            }
+        }
+    }
+
+    private var retryButton: some View {
+        Button(action: retryCurrentRun) {
+            Label(String(localized: "game.over.retry"), systemImage: "arrow.clockwise")
+                .frame(maxWidth: .infinity, minHeight: 44)
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(activeTheme.palette.ring)
+        .accessibilityIdentifier("game.retry")
+    }
+
+    private var chooseModeButton: some View {
+        Button {
+            showModes = true
+        } label: {
+            Label(String(localized: "game.over.chooseMode"), systemImage: "square.grid.2x2.fill")
+                .frame(maxWidth: .infinity, minHeight: 44)
+        }
+        .buttonStyle(.bordered)
+        .accessibilityIdentifier("game.chooseMode")
     }
 
     private var footer: some View {
@@ -347,11 +429,41 @@ struct GlassPulseGame: View {
         }
     }
 
-    private var boardAccessibilityHint: String {
-        guard engine.state != .paused else {
-            return "Nhấn nút Tiếp tục để chơi."
+    private var rewardSummary: String {
+        String.localizedStringWithFormat(
+            String(localized: "game.over.reward.format"),
+            engine.rewardForCurrentRun
+        )
+    }
+
+    private var dailyBonusSummary: String {
+        String.localizedStringWithFormat(
+            String(localized: "game.over.dailyBonus.format"),
+            dailyBonusForCurrentRun
+        )
+    }
+
+    private var directionAccessibilityValue: String {
+        engine.direction >= 0
+            ? String(localized: "game.input.direction.clockwise")
+            : String(localized: "game.input.direction.counterclockwise")
+    }
+
+    private var gameplayInputHint: String {
+        switch engine.state {
+        case .start:
+            String(localized: "game.input.hint.start")
+        case .playing:
+            String(localized: "game.input.hint.playing")
+        case .paused:
+            String(localized: "game.input.hint.paused")
+        case .over:
+            String(localized: "game.input.hint.over")
         }
-        return "Chạm để bắt đầu hoặc đảo chiều bóng."
+    }
+
+    private var boardAccessibilityHint: String {
+        gameplayInputHint
     }
 
     private func metric(_ title: String, value: String) -> some View {
@@ -365,16 +477,52 @@ struct GlassPulseGame: View {
         }
     }
 
-    private func handleGameTap() {
-        guard engine.state != .paused else { return }
-        if engine.state == .start || engine.state == .over {
+    private func handleGameplaySurfaceTap() {
+        switch engine.state {
+        case .start:
             applySelectedModeIfIdle()
+            Task { @MainActor in
+                await activityController.finishPendingEnd()
+                guard engine.state == .start else { return }
+                engine.handleTap()
+            }
+        case .playing:
+            engine.handleTap()
+        case .paused, .over:
+            return
         }
-        if engine.state == .over {
-            didRecordCurrentRun = false
-            dailyBonusForCurrentRun = 0
+    }
+
+    private func retryCurrentRun() {
+        guard engine.state == .over else { return }
+        let replaySession = engine.session.replayContext()
+        Task { @MainActor in
+            await activityController.finishPendingEnd()
+            guard engine.state == .over else { return }
+            replaceEngine(session: replaySession, startImmediately: true)
         }
+    }
+
+    private func selectModeFromPicker(_ modeID: GameModeID) {
+        guard canChangeMode else { return }
+        let session = modeID == .dailyChallenge
+            ? GameSessionContext.daily(date: .now, calendar: .current)
+            : GameSessionContext.standard(modeID: modeID)
+        replaceEngine(session: session, startImmediately: false)
+    }
+
+    private func replaceEngine(
+        session: GameSessionContext,
+        startImmediately: Bool
+    ) {
+        let replacement = GameEngine(session: session)
+        replacement.connectSensory(sensory.client)
+        engine = replacement
+        didRecordCurrentRun = false
+        dailyBonusForCurrentRun = 0
+        guard startImmediately else { return }
         engine.handleTap()
+        handleStateChange(engine.state)
     }
 
     private func handleStateChange(_ state: GameState) {
@@ -414,10 +562,30 @@ struct GlassPulseGame: View {
             guard engine.modeID != modeID else { return }
             session = GameSessionContext.standard(modeID: modeID)
         }
-        let replacement = GameEngine(session: session)
-        replacement.connectSensory(sensory.client)
-        engine = replacement
+        replaceEngine(session: session, startImmediately: false)
+    }
+
+    private func configureUITestHarnessIfNeeded() {
+#if DEBUG
+        guard ProcessInfo.processInfo.arguments.contains("--ui-testing-game-over") else { return }
+        let scenario = GameScenario(
+            ballAngle: 0,
+            direction: 1,
+            obstacles: [Obstacle(angle: 0.32, width: 0.14, speed: 0)],
+            gem: Gem(angle: 0.08)
+        )
+        let session = GameSessionContext.standard(modeID: .classic, seed: 9_001)
+        let harnessEngine = GameEngine(scenario: scenario, session: session)
+        harnessEngine.connectSensory(sensory.client)
+        let start = Date(timeIntervalSinceReferenceDate: 9_001)
+        harnessEngine.handleTap(now: start)
+        for step in 1...4 {
+            harnessEngine.advance(to: start.addingTimeInterval(Double(step) * 0.10))
+        }
+        engine = harnessEngine
         didRecordCurrentRun = false
         dailyBonusForCurrentRun = 0
+        handleStateChange(engine.state)
+#endif
     }
 }

@@ -2,6 +2,8 @@ import SwiftUI
 
 @MainActor
 struct ModePickerView: View {
+    let onSelection: ((GameModeID) -> Void)?
+
     @Environment(PlayerProfile.self) private var profile
     @Environment(PlusStore.self) private var plusStore
     @Environment(SensoryEngine.self) private var sensory
@@ -9,6 +11,10 @@ struct ModePickerView: View {
 
     @State private var selectionError: PlayerProfileError?
     @State private var showPlus = false
+
+    init(onSelection: ((GameModeID) -> Void)? = nil) {
+        self.onSelection = onSelection
+    }
 
     var body: some View {
         @Bindable var sensory = sensory
@@ -33,6 +39,7 @@ struct ModePickerView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Đóng") { dismiss() }
+                        .accessibilityIdentifier("mode.close")
                 }
             }
         }
@@ -119,6 +126,7 @@ struct ModePickerView: View {
         }
         switch profile.select(mode: modeID, access: plusStore.access) {
         case .success:
+            onSelection?(modeID)
             dismiss()
         case .failure(let error):
             selectionError = error

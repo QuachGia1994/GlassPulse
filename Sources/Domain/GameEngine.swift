@@ -66,7 +66,9 @@ final class GameEngine {
         case .playing: ""
         case .paused: "Đã tạm dừng"
         case .over:
-            runOutcome == .completed ? "Hoàn thành" : "Thua rồi. Chạm để chơi lại"
+            runOutcome == .completed
+                ? String(localized: "game.status.over.completed")
+                : String(localized: "game.status.over.collision")
         }
     }
 
@@ -91,8 +93,7 @@ final class GameEngine {
         case .paused:
             return
         case .over:
-            reset()
-            startPlaying(at: now)
+            return
         }
     }
 
