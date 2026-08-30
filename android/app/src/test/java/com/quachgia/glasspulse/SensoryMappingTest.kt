@@ -151,8 +151,8 @@ class SensoryMappingTest {
     @Test
     fun disabledSettingsProduceZeroSinkCalls() {
         val settings = GameSettingsStore(InMemoryKeyValueStore())
-        settings.setHapticsEnabled(false)
-        settings.setSoundEnabled(false)
+        settings.updateHapticsEnabled(false)
+        settings.updateSoundEnabled(false)
         val (dispatcher, sinks) = newDispatcher(settings)
 
         dispatcher.reversed()
@@ -167,7 +167,7 @@ class SensoryMappingTest {
     @Test
     fun hapticsAndSfxAreGatedIndependently() {
         val settings = GameSettingsStore(InMemoryKeyValueStore())
-        settings.setHapticsEnabled(false)
+        settings.updateHapticsEnabled(false)
         val (dispatcher, sinks) = newDispatcher(settings)
 
         dispatcher.reversed()

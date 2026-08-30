@@ -59,7 +59,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun seedReduceMotionFromSystem(settings: GameSettingsStore) {
         if (settings.reduceMotionInitialized) return
-        settings.setReduceMotionEnabled(systemReduceMotion(this))
+        settings.updateReduceMotionEnabled(systemReduceMotion(this))
     }
 
     /**
@@ -79,7 +79,7 @@ class MainActivity : AppCompatActivity() {
         val activeTag = activeLocales[0]?.toLanguageTag()
         val activeLanguage = AppLanguage.fromTag(activeTag)
         if (activeLanguage != settings.language) {
-            settings.setLanguage(activeLanguage)
+            settings.updateLanguage(activeLanguage)
         }
     }
 }

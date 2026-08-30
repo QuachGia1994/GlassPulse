@@ -1251,14 +1251,14 @@ private fun SettingsSheet(
                         label = stringResource(R.string.settings_music_label),
                         hint = stringResource(R.string.settings_music_hint),
                         checked = settings.musicEnabled,
-                        onChecked = settings::setMusicEnabled
+                        onChecked = settings::updateMusicEnabled
                     )
                     SettingsToggle(
                         tag = "settings.sfx",
                         label = stringResource(R.string.settings_sfx_label),
                         hint = stringResource(R.string.settings_sfx_hint),
                         checked = settings.soundEnabled,
-                        onChecked = settings::setSoundEnabled
+                        onChecked = settings::updateSoundEnabled
                     )
                 }
                 SettingsSection(R.string.settings_section_feedback, palette) {
@@ -1267,7 +1267,7 @@ private fun SettingsSheet(
                         label = stringResource(R.string.settings_haptics_label),
                         hint = stringResource(R.string.settings_haptics_hint),
                         checked = settings.hapticsEnabled,
-                        onChecked = settings::setHapticsEnabled
+                        onChecked = settings::updateHapticsEnabled
                     )
                 }
                 SettingsSection(R.string.settings_section_display, palette) {
@@ -1276,14 +1276,14 @@ private fun SettingsSheet(
                         label = stringResource(R.string.settings_reduce_motion_label),
                         hint = stringResource(R.string.settings_reduce_motion_hint),
                         checked = settings.reduceMotionEnabled,
-                        onChecked = settings::setReduceMotionEnabled
+                        onChecked = settings::updateReduceMotionEnabled
                     )
                     SettingsToggle(
                         tag = "settings.highContrast",
                         label = stringResource(R.string.settings_high_contrast_label),
                         hint = stringResource(R.string.settings_high_contrast_hint),
                         checked = settings.highContrastEnabled,
-                        onChecked = settings::setHighContrastEnabled
+                        onChecked = settings::updateHighContrastEnabled
                     )
                 }
                 SettingsSection(R.string.settings_section_language, palette) {
@@ -1294,7 +1294,7 @@ private fun SettingsSheet(
                             selected = settings.language == language,
                             palette = palette,
                             onSelect = {
-                                settings.setLanguage(language)
+                                settings.updateLanguage(language)
                                 controller.applyMusicSettings()
                             }
                         )

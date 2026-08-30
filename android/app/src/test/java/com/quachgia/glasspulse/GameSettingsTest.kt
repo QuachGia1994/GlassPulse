@@ -25,12 +25,12 @@ class GameSettingsTest {
         val store = InMemoryKeyValueStore()
         val settings = GameSettingsStore(store)
 
-        settings.setMusicEnabled(false)
-        settings.setSoundEnabled(false)
-        settings.setHapticsEnabled(false)
-        settings.setReduceMotionEnabled(true)
-        settings.setHighContrastEnabled(true)
-        settings.setLanguage(AppLanguage.VIETNAMESE)
+        settings.updateMusicEnabled(false)
+        settings.updateSoundEnabled(false)
+        settings.updateHapticsEnabled(false)
+        settings.updateReduceMotionEnabled(true)
+        settings.updateHighContrastEnabled(true)
+        settings.updateLanguage(AppLanguage.VIETNAMESE)
 
         val reloaded = GameSettingsStore(store)
         assertFalse(reloaded.musicEnabled)
@@ -56,15 +56,15 @@ class GameSettingsTest {
     fun flagsAreIndependent() {
         val settings = newStore()
 
-        settings.setMusicEnabled(false)
+        settings.updateMusicEnabled(false)
         assertFalse(settings.musicEnabled)
         assertTrue(settings.soundEnabled)
         assertTrue(settings.hapticsEnabled)
 
-        settings.setSoundEnabled(false)
+        settings.updateSoundEnabled(false)
         assertTrue(settings.hapticsEnabled)
 
-        settings.setHapticsEnabled(false)
+        settings.updateHapticsEnabled(false)
         assertFalse(settings.soundEnabled)
         assertFalse(settings.musicEnabled)
     }

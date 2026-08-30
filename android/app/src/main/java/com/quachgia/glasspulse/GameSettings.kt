@@ -109,33 +109,33 @@ class GameSettingsStore(private val store: KeyValueStore) {
     val reduceMotionInitialized: Boolean
         get() = store.bool(Key.REDUCE_MOTION_INITIALIZED.id, false)
 
-    fun setMusicEnabled(enabled: Boolean) {
+    fun updateMusicEnabled(enabled: Boolean) {
         musicEnabled = enabled
         store.putBool(Key.MUSIC_ENABLED.id, enabled)
     }
 
-    fun setSoundEnabled(enabled: Boolean) {
+    fun updateSoundEnabled(enabled: Boolean) {
         soundEnabled = enabled
         store.putBool(Key.SOUND_ENABLED.id, enabled)
     }
 
-    fun setHapticsEnabled(enabled: Boolean) {
+    fun updateHapticsEnabled(enabled: Boolean) {
         hapticsEnabled = enabled
         store.putBool(Key.HAPTICS_ENABLED.id, enabled)
     }
 
-    fun setReduceMotionEnabled(enabled: Boolean) {
+    fun updateReduceMotionEnabled(enabled: Boolean) {
         reduceMotionEnabled = enabled
         store.putBool(Key.REDUCE_MOTION_ENABLED.id, enabled)
         store.putBool(Key.REDUCE_MOTION_INITIALIZED.id, true)
     }
 
-    fun setHighContrastEnabled(enabled: Boolean) {
+    fun updateHighContrastEnabled(enabled: Boolean) {
         highContrastEnabled = enabled
         store.putBool(Key.HIGH_CONTRAST_ENABLED.id, enabled)
     }
 
-    fun setLanguage(language: AppLanguage) {
+    fun updateLanguage(language: AppLanguage) {
         this.language = language
         store.putString(Key.LANGUAGE.id, language.tag ?: "")
     }
