@@ -6,11 +6,15 @@ struct GlassPulseGame: View {
     @Environment(PlusStore.self) private var plusStore
     @Environment(SensoryEngine.self) private var sensory
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     @State private var engine = GameEngine()
+    @State private var activityController = GameActivityController()
+    @State private var showModes = false
     @State private var showThemes = false
     @State private var showPlus = false
     @State private var didRecordCurrentRun = false
+    @State private var dailyBonusForCurrentRun = 0
 
     private var activeTheme: PulseTheme {
         profile.activeTheme(access: plusStore.access)
@@ -18,33 +22,48 @@ struct GlassPulseGame: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let boardSide = min(
-                max(proxy.size.width - 32, 180),
-                max(proxy.size.height - 184, 180)
-            )
+            let usableHeight = proxy.size.height - proxy.safeAreaInsets.top - proxy.safeAreaInsets.bottom
+            let chromeBudget: CGFloat = dynamicTypeSize.isAccessibilitySize ? 230 : 150
+            let boardSide = max(180, min(proxy.size.width - 32, usableHeight - chromeBudget))
 
             ZStack {
                 background
-                VStack(spacing: 14) {
+                VStack(spacing: 10) {
                     header
+                    Spacer(minLength: 6)
                     gameBoard(side: boardSide)
+                    Spacer(minLength: 6)
                     footer
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                 .padding(.horizontal, 16)
-                .padding(.vertical, 10)
+                .padding(.vertical, 8)
             }
         }
         .task {
             engine.connectSensory(sensory.client)
-            profile.registerDailyPlay()
             await plusStore.start()
+            applySelectedModeIfIdle()
+        }
+        .onChange(of: profile.selectedModeID) { _, _ in
+            applySelectedModeIfIdle()
+        }
+        .onChange(of: plusStore.hasActivePlusSubscription) { _, _ in
+            applySelectedModeIfIdle()
         }
         .onChange(of: engine.state) { _, state in
             handleStateChange(state)
         }
+        .onChange(of: engine.score) { _, _ in
+            activityController.updateMeaningfulEvent(engine: engine, profile: profile)
+        }
         .onChange(of: scenePhase) { _, phase in
             guard phase != .active else { return }
             engine.pause()
+        }
+        .sheet(isPresented: $showModes) {
+            ModePickerView()
+                .presentationDetents([.large])
         }
         .sheet(isPresented: $showThemes) {
             ThemePickerView()
@@ -71,15 +90,18 @@ struct GlassPulseGame: View {
     }
 
     private var header: some View {
-        HStack(spacing: 16) {
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(spacing: 14) {
+            VStack(alignment: .leading, spacing: 3) {
                 brandTitle
+                Text(engine.modeID.title)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(activeTheme.palette.ring)
                 Text("\(engine.score)")
-                    .font(.system(size: 40, weight: .semibold, design: .rounded))
+                    .font(.system(size: 38, weight: .semibold, design: .rounded))
                     .monospacedDigit()
                     .contentTransition(.numericText())
             }
-            Spacer(minLength: 8)
+            Spacer(minLength: 6)
             metric("KỶ LỤC", value: "\(profile.bestScore)")
             metric("STREAK", value: "\(profile.dailyStreak)")
             metric("SHARD", value: "\(profile.totalShards)")
@@ -90,8 +112,14 @@ struct GlassPulseGame: View {
     private func gameBoard(side: CGFloat) -> some View {
         ZStack(alignment: .topTrailing) {
             playfield(side: side)
-            pauseControl
+            modeHUD
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .padding(12)
+                .allowsHitTesting(false)
+            if engine.state == .playing {
+                pauseControl
+                    .padding(12)
+            }
         }
         .frame(width: side, height: side)
         .animation(
@@ -101,37 +129,111 @@ struct GlassPulseGame: View {
     }
 
     private func playfield(side: CGFloat) -> some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 60.0)) { timeline in
-            Canvas { context, size in
-                engine.draw(
-                    in: &context,
-                    size: size,
-                    now: timeline.date,
-                    theme: activeTheme
-                )
+        rendererSurface
+            .frame(width: side, height: side)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .stroke(.white.opacity(0.14), lineWidth: 1)
+            }
+            .overlay { statusOverlay }
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .onTapGesture { handleGameTap() }
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel("Vòng chơi Glass Pulse")
+            .accessibilityValue("Điểm \(engine.score). \(engine.statusText)")
+            .accessibilityHint(boardAccessibilityHint)
+            .accessibilityIdentifier("game.board")
+    }
+
+    @ViewBuilder
+    private var rendererSurface: some View {
+        if RendererBenchmarkFlags.spriteKitEnabled {
+            TimelineView(.animation(minimumInterval: 1.0 / 120.0)) { timeline in
+                SpriteBenchmarkView(snapshot: engine.renderSnapshot)
+                    .onChange(of: timeline.date, initial: true) { _, now in
+                        RenderDiagnostics.measureSimulation {
+                            engine.advance(to: now)
+                        }
+                    }
+            }
+        } else {
+            TimelineView(.animation(minimumInterval: 1.0 / 60.0)) { timeline in
+                Canvas { context, size in
+                    engine.draw(
+                        in: &context,
+                        size: size,
+                        now: timeline.date,
+                        theme: activeTheme
+                    )
+                }
             }
         }
-        .frame(width: side, height: side)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .stroke(.white.opacity(0.14), lineWidth: 1)
+    }
+
+    @ViewBuilder
+    private var modeHUD: some View {
+        if engine.state != .start {
+            VStack(alignment: .leading, spacing: 5) {
+                if engine.modeID == .dailyChallenge {
+                    hudPill("HÔM NAY", engine.effectiveModeID.title)
+                    hudPill("LOCAL BEST", "\(profile.dailyBest(for: engine.session.dailyKey))")
+                }
+                if let remaining = engine.remainingTime {
+                    hudPill("CÒN", "\(Int(ceil(remaining)))s")
+                }
+                if engine.effectiveModeID == .rush60 || engine.effectiveModeID == .precisionPulse {
+                    hudPill("COMBO", "x\(engine.combo)")
+                }
+                if engine.effectiveModeID == .precisionPulse {
+                    hudPill("PULSE", engine.pulseIsActive ? "SÁNG ◉" : "CHỜ ○")
+                }
+                if engine.effectiveModeID == .waveSurvival {
+                    hudPill("WAVE", "\(engine.currentWave)/\(engine.rules.finalWave ?? 5)")
+                }
+            }
         }
-        .overlay { statusOverlay }
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .onTapGesture { handleGameTap() }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Vòng chơi Glass Pulse")
-        .accessibilityValue("Điểm \(engine.score). \(engine.statusText)")
-        .accessibilityHint(boardAccessibilityHint)
-        .accessibilityAddTraits(.isButton)
-        .accessibilityIdentifier("game.board")
+    }
+
+    private func hudPill(_ title: String, _ value: String) -> some View {
+        HStack(spacing: 5) {
+            Text(title)
+                .font(.system(size: 8, weight: .bold))
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.caption2.weight(.semibold).monospacedDigit())
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .background(.thinMaterial, in: Capsule())
     }
 
     @ViewBuilder
     private var statusOverlay: some View {
-        if engine.state != .playing {
+        switch engine.state {
+        case .playing:
+            EmptyView()
+        case .paused:
+            VStack(spacing: 12) {
+                Text(engine.statusText)
+                    .font(.headline)
+                Button {
+                    engine.resume()
+                } label: {
+                    Label("Tiếp tục", systemImage: "play.fill")
+                        .font(.headline)
+                        .padding(.horizontal, 8)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(activeTheme.palette.ring)
+                .accessibilityIdentifier("game.resume")
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 18)
+            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .transition(.scale.combined(with: .opacity))
+        case .start, .over:
             VStack(spacing: 8) {
                 Image(systemName: statusIcon)
                     .font(.title2)
@@ -139,15 +241,15 @@ struct GlassPulseGame: View {
                 Text(engine.statusText)
                     .font(.headline)
                     .multilineTextAlignment(.center)
-                if engine.state == .paused {
-                    Text("Nhấn Tiếp tục để chơi")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
                 if engine.state == .over {
                     Text("+\(engine.rewardForCurrentRun) shard")
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(.secondary)
+                    if dailyBonusForCurrentRun > 0 {
+                        Text("+\(dailyBonusForCurrentRun) Daily bonus")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(activeTheme.palette.ring)
+                    }
                 }
             }
             .padding(.horizontal, 20)
@@ -159,7 +261,16 @@ struct GlassPulseGame: View {
     }
 
     private var footer: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 8) {
+            Button {
+                showModes = true
+            } label: {
+                Label("Mode", systemImage: "square.grid.2x2.fill")
+                    .frame(maxWidth: .infinity)
+            }
+            .disabled(!canChangeMode)
+            .accessibilityIdentifier("game.modes")
+
             Button {
                 engine.pause()
                 showThemes = true
@@ -167,6 +278,7 @@ struct GlassPulseGame: View {
                 Label("Theme", systemImage: "paintpalette.fill")
                     .frame(maxWidth: .infinity)
             }
+            .accessibilityIdentifier("game.themes")
 
             Button {
                 engine.pause()
@@ -177,8 +289,13 @@ struct GlassPulseGame: View {
             }
             .tint(activeTheme.palette.ring)
         }
+        .font(.caption.weight(.medium))
         .buttonStyle(.bordered)
         .buttonBorderShape(.roundedRectangle(radius: 14))
+    }
+
+    private var canChangeMode: Bool {
+        engine.state == .start || engine.state == .over
     }
 
     private var brandTitle: some View {
@@ -198,26 +315,25 @@ struct GlassPulseGame: View {
         }
     }
 
-    @ViewBuilder
     private var pauseControl: some View {
-        if engine.state == .playing || engine.state == .paused {
-            Button(action: togglePause) {
-                Image(systemName: engine.state == .paused ? "play.fill" : "pause.fill")
-                    .font(.headline)
-                    .frame(width: 44, height: 44)
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(activeTheme.palette.ring)
-            .background(.thinMaterial, in: Circle())
-            .overlay { Circle().stroke(.white.opacity(0.16), lineWidth: 1) }
-            .accessibilityLabel(engine.state == .paused ? "Tiếp tục" : "Tạm dừng")
-            .accessibilityIdentifier("game.pause")
-            .transition(.scale.combined(with: .opacity))
+        Button {
+            engine.pause()
+        } label: {
+            Image(systemName: "pause.fill")
+                .font(.headline)
+                .frame(width: 44, height: 44)
         }
+        .buttonStyle(.plain)
+        .foregroundStyle(activeTheme.palette.ring)
+        .background(.thinMaterial, in: Circle())
+        .overlay { Circle().stroke(.white.opacity(0.16), lineWidth: 1) }
+        .accessibilityLabel("Tạm dừng")
+        .accessibilityIdentifier("game.pause")
+        .transition(.scale.combined(with: .opacity))
     }
 
     private var plusButtonTitle: String {
-        if plusStore.isBetaFullAccess { return "Beta mở" }
+        if plusStore.isBetaFullAccess { return "Beta" }
         return plusStore.isPlusUnlocked ? "Plus bật" : "Plus"
     }
 
@@ -225,8 +341,9 @@ struct GlassPulseGame: View {
         switch engine.state {
         case .start: "hand.tap.fill"
         case .playing: "circle"
-        case .paused: "pause.circle.fill"
-        case .over: "waveform.path.ecg"
+        case .paused: "play.circle.fill"
+        case .over:
+            engine.runOutcome == .completed ? "checkmark.circle.fill" : "waveform.path.ecg"
         }
     }
 
@@ -250,29 +367,57 @@ struct GlassPulseGame: View {
 
     private func handleGameTap() {
         guard engine.state != .paused else { return }
+        if engine.state == .start || engine.state == .over {
+            applySelectedModeIfIdle()
+        }
         if engine.state == .over {
             didRecordCurrentRun = false
+            dailyBonusForCurrentRun = 0
         }
         engine.handleTap()
     }
 
-    private func togglePause() {
-        switch engine.state {
-        case .playing:
-            engine.pause()
-        case .paused:
-            engine.resume()
-        case .start, .over:
-            return
+    private func handleStateChange(_ state: GameState) {
+        if state == .over, !didRecordCurrentRun {
+            didRecordCurrentRun = true
+            profile.recordRun(
+                score: engine.score,
+                reward: engine.rewardForCurrentRun
+            )
+            recordDailyCompletionIfNeeded()
         }
+        activityController.synchronize(engine: engine, profile: profile)
     }
 
-    private func handleStateChange(_ state: GameState) {
-        guard state == .over, !didRecordCurrentRun else { return }
-        didRecordCurrentRun = true
-        profile.recordRun(
+    private func recordDailyCompletionIfNeeded() {
+        guard engine.modeID == .dailyChallenge,
+              engine.runOutcome == .completed,
+              let dayKey = engine.session.dailyKey,
+              let dailyDate = engine.session.dailyDate else { return }
+        dailyBonusForCurrentRun = profile.recordDailyCompletion(
+            dayKey: dayKey,
+            date: dailyDate,
             score: engine.score,
-            reward: engine.rewardForCurrentRun
+            firstClearBonus: engine.rules.dailyFirstClearBonus,
+            calendar: .current
         )
+    }
+
+    private func applySelectedModeIfIdle() {
+        guard canChangeMode else { return }
+        let modeID = profile.activeMode(access: plusStore.access)
+        let session: GameSessionContext
+        if modeID == .dailyChallenge {
+            session = GameSessionContext.daily(date: .now, calendar: .current)
+            guard engine.modeID != modeID || engine.session.dailyKey != session.dailyKey else { return }
+        } else {
+            guard engine.modeID != modeID else { return }
+            session = GameSessionContext.standard(modeID: modeID)
+        }
+        let replacement = GameEngine(session: session)
+        replacement.connectSensory(sensory.client)
+        engine = replacement
+        didRecordCurrentRun = false
+        dailyBonusForCurrentRun = 0
     }
 }

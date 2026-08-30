@@ -4,6 +4,7 @@ import SwiftUI
 struct LaunchSplashView: View {
     let isBetaFullAccess: Bool
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isPulsing = false
 
     var body: some View {
@@ -12,7 +13,7 @@ struct LaunchSplashView: View {
             content
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Glass Pulse đang khởi động")
+        .accessibilityLabel("Glass Pulse")
         .accessibilityIdentifier("launch.splash")
         .onAppear(perform: startPulsing)
     }
@@ -32,7 +33,7 @@ struct LaunchSplashView: View {
     private var content: some View {
         VStack(spacing: 22) {
             GlassPulseLogo(size: 132)
-                .scaleEffect(isPulsing ? 1.04 : 0.96)
+                .scaleEffect(reduceMotion ? 1 : (isPulsing ? 1.04 : 0.96))
             VStack(spacing: 8) {
                 Text("GLASS PULSE")
                     .font(.title2.weight(.semibold))
@@ -44,13 +45,11 @@ struct LaunchSplashView: View {
                         .foregroundStyle(.cyan)
                 }
             }
-            ProgressView()
-                .controlSize(.small)
-                .tint(.cyan)
         }
     }
 
     private func startPulsing() {
+        guard !reduceMotion else { return }
         withAnimation(
             .easeInOut(duration: 0.72)
                 .repeatForever(autoreverses: true)

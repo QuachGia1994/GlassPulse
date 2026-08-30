@@ -2,23 +2,14 @@ import Foundation
 import Observation
 import StoreKit
 
-enum PlusPlan: String, CaseIterable, Identifiable, Sendable {
+enum PlusPlan: String, CaseIterable, Sendable {
     case weekly
     case monthly
-
-    var id: String { productID }
 
     var productID: String {
         switch self {
         case .weekly: "com.quachgia.glasspulse.plus.weekly"
         case .monthly: "com.quachgia.glasspulse.plus.monthly"
-        }
-    }
-
-    var title: String {
-        switch self {
-        case .weekly: "Plus tuần"
-        case .monthly: "Plus tháng"
         }
     }
 
@@ -40,7 +31,6 @@ enum PlusPlan: String, CaseIterable, Identifiable, Sendable {
 enum PlusStoreError: Error, Equatable, LocalizedError {
     case productUnavailable
     case failedVerification
-    case unknownPurchaseState
     case storeFailure(String)
 
     var errorDescription: String? {
@@ -49,11 +39,20 @@ enum PlusStoreError: Error, Equatable, LocalizedError {
             "Gói Plus chưa tải được từ App Store."
         case .failedVerification:
             "Không thể xác minh giao dịch App Store."
-        case .unknownPurchaseState:
-            "App Store trả về trạng thái giao dịch chưa được hỗ trợ."
         case .storeFailure(let reason):
             "App Store gặp lỗi: \(reason)"
         }
+    }
+}
+
+enum SubscriptionEntitlementPolicy {
+    static func isActive(
+        revocationDate: Date?,
+        expirationDate: Date?,
+        now: Date
+    ) -> Bool {
+        guard revocationDate == nil else { return false }
+        return expirationDate.map { $0 > now } ?? true
     }
 }
 
@@ -61,14 +60,25 @@ enum PlusStoreError: Error, Equatable, LocalizedError {
 @Observable
 final class PlusStore {
     nonisolated static let productIDs = Set(PlusPlan.allCases.map(\.productID))
+    nonisolated static let subscriptionGroupID = "5A15D10B-9197-4D8A-A026-77A5ECCE01A1"
 
-    private(set) var products: [Product] = []
+    private var products: [Product] = []
     private(set) var hasActivePlusSubscription = false
     private(set) var isBusy = false
     private(set) var notice: String?
     private(set) var errorMessage: String?
 
     @ObservationIgnored private var transactionTask: Task<Void, Never>?
+    @ObservationIgnored private let testingEntitlementEnabled: Bool
+
+    init(testingEntitlementEnabled: Bool = false) {
+#if DEBUG
+        self.testingEntitlementEnabled = testingEntitlementEnabled
+        hasActivePlusSubscription = testingEntitlementEnabled
+#else
+        self.testingEntitlementEnabled = false
+#endif
+    }
 
     var access: FeatureAccess {
         FeatureAccess.current(
@@ -85,6 +95,12 @@ final class PlusStore {
     }
 
     func start() async {
+        guard !testingEntitlementEnabled else {
+            products = []
+            notice = "UI test entitlement đang bật."
+            errorMessage = nil
+            return
+        }
         guard !isBetaFullAccess else {
             products = []
             notice = "Beta Full Access đang bật."
@@ -108,19 +124,6 @@ final class PlusStore {
             products = loaded.sorted { productSortOrder($0) < productSortOrder($1) }
             guard !products.isEmpty else { throw PlusStoreError.productUnavailable }
             try await updateEntitlementState()
-            errorMessage = nil
-        } catch {
-            handle(error)
-        }
-    }
-
-    func purchase(_ product: Product) async {
-        isBusy = true
-        defer { isBusy = false }
-
-        do {
-            let result = try await product.purchase()
-            try await handlePurchaseResult(result)
             errorMessage = nil
         } catch {
             handle(error)
@@ -164,24 +167,6 @@ final class PlusStore {
         }
     }
 
-    private func handlePurchaseResult(
-        _ result: Product.PurchaseResult
-    ) async throws {
-        switch result {
-        case .success(let verification):
-            let transaction = try verified(verification)
-            await transaction.finish()
-            try await updateEntitlementState()
-            notice = "Glass Pulse Plus đã được kích hoạt."
-        case .pending:
-            notice = "Giao dịch đang chờ App Store xác nhận."
-        case .userCancelled:
-            notice = nil
-        @unknown default:
-            throw PlusStoreError.unknownPurchaseState
-        }
-    }
-
     private func refreshEntitlements() async {
         do {
             try await updateEntitlementState()
@@ -196,8 +181,11 @@ final class PlusStore {
         for await result in Transaction.currentEntitlements {
             let transaction = try verified(result)
             guard Self.productIDs.contains(transaction.productID) else { continue }
-            guard transaction.revocationDate == nil else { continue }
-            guard transaction.expirationDate.map({ $0 > .now }) ?? true else { continue }
+            guard SubscriptionEntitlementPolicy.isActive(
+                revocationDate: transaction.revocationDate,
+                expirationDate: transaction.expirationDate,
+                now: .now
+            ) else { continue }
             unlocked = true
             break
         }

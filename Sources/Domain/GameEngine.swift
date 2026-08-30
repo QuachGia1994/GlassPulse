@@ -5,9 +5,15 @@ import Observation
 @Observable
 final class GameEngine {
     let economy: GameEconomy
+    let session: GameSessionContext
+    let rules: GameModeRules
 
     private(set) var score = 0
+    private(set) var combo = 1
     private(set) var state: GameState = .start
+    private(set) var runOutcome: GameRunOutcome?
+    private(set) var sessionElapsed: TimeInterval = 0
+    private(set) var currentWave = 1
     private(set) var ballAngle = -Double.pi / 2
     private(set) var direction = 1.0
     private(set) var obstacles: [Obstacle] = []
@@ -19,19 +25,39 @@ final class GameEngine {
     @ObservationIgnored private var sensory: SensoryClient
     @ObservationIgnored private var lastUpdate: Date?
     @ObservationIgnored private let initialScenario: GameScenario?
+    @ObservationIgnored private var wasInGemRange = false
     private let ballSpeed = 1.6
 
     init(
         seed: UInt64 = UInt64.random(in: UInt64.min...UInt64.max),
         sensory: SensoryClient = .silent,
         economy: GameEconomy = .standard,
-        scenario: GameScenario? = nil
+        scenario: GameScenario? = nil,
+        session: GameSessionContext? = nil
     ) {
-        random = SplitMix64(seed: seed)
+        let resolvedSession = session ?? .standard(modeID: .classic, seed: seed)
+        random = SplitMix64(seed: resolvedSession.seed)
         self.sensory = sensory
         self.economy = economy
+        self.session = resolvedSession
+        rules = resolvedSession.rules
         initialScenario = scenario
         reset()
+    }
+
+    var modeID: GameModeID { session.modeID }
+
+    var effectiveModeID: GameModeID { session.effectiveModeID }
+
+    var remainingTime: TimeInterval? {
+        rules.sessionDuration.map { max(0, $0 - sessionElapsed) }
+    }
+
+    var pulseIsActive: Bool {
+        guard let cycle = rules.pulseCycleDuration,
+              let active = rules.pulseActiveDuration,
+              cycle > 0 else { return true }
+        return sessionElapsed.truncatingRemainder(dividingBy: cycle) < active
     }
 
     var statusText: String {
@@ -39,12 +65,16 @@ final class GameEngine {
         case .start: "Chạm để bắt đầu"
         case .playing: ""
         case .paused: "Đã tạm dừng"
-        case .over: "Thua rồi. Chạm để chơi lại"
+        case .over:
+            runOutcome == .completed ? "Hoàn thành" : "Thua rồi. Chạm để chơi lại"
         }
     }
 
     var rewardForCurrentRun: Int {
-        economy.reward(for: score)
+        let baseReward = economy.reward(for: score)
+        guard effectiveModeID == .waveSurvival else { return baseReward }
+        let waveReward = runOutcome == .completed ? currentWave * 2 : max(0, currentWave - 1)
+        return baseReward + waveReward
     }
 
     func connectSensory(_ sensory: SensoryClient) {
@@ -70,6 +100,7 @@ final class GameEngine {
         guard state == .playing else { return }
         state = .paused
         lastUpdate = nil
+        sensory.stoppedContinuous()
     }
 
     func resume(at now: Date = .now) {
@@ -85,16 +116,29 @@ final class GameEngine {
         defer { lastUpdate = now }
         guard let lastUpdate else { return }
 
-        let elapsed = now.timeIntervalSince(lastUpdate)
-        let deltaTime = min(max(elapsed, 0), 0.05)
-        guard deltaTime > 0 else { return }
+        let elapsed = max(now.timeIntervalSince(lastUpdate), 0)
+        guard elapsed > 0 else { return }
+        sessionElapsed += elapsed
+        if shouldCompleteTimedRun {
+            completeRun()
+            return
+        }
+        updateWaveIfNeeded()
+        guard state == .playing else { return }
 
+        let deltaTime = min(elapsed, 0.05)
         moveBodies(deltaTime: deltaTime)
         guard !hasCollision else {
             endRun(at: now)
             return
         }
         collectGemIfNeeded(at: now)
+        updatePrecisionFeedback()
+    }
+
+    private var shouldCompleteTimedRun: Bool {
+        guard let duration = rules.sessionDuration else { return false }
+        return sessionElapsed >= duration
     }
 
     private func startPlaying(at now: Date) {
@@ -104,10 +148,16 @@ final class GameEngine {
 
     private func reset() {
         score = 0
+        combo = 1
         state = .start
+        runOutcome = nil
+        sessionElapsed = 0
+        currentWave = 1
+        wasInGemRange = false
         gemBurst = nil
         collisionEffect = nil
         lastUpdate = nil
+        sensory.stoppedContinuous()
 
         guard let initialScenario else {
             resetRandomScenario()
@@ -148,13 +198,34 @@ final class GameEngine {
     }
 
     private func collectGemIfNeeded(at now: Date) {
-        guard AngleMath.distance(ballAngle, gem.angle) < economy.gemCollectionRadius else { return }
+        let inRange = AngleMath.distance(ballAngle, gem.angle) < economy.gemCollectionRadius
+        guard inRange else {
+            wasInGemRange = false
+            return
+        }
+        guard !wasInGemRange else { return }
+        wasInGemRange = true
+        guard effectiveModeID != .precisionPulse || pulseIsActive else {
+            combo = 1
+            return
+        }
+        collectGem(at: now)
+    }
+
+    private func collectGem(at now: Date) {
         let collectedAngle = gem.angle
-        score += economy.pointsPerGem
+        score += scoreIncrement
+        combo = min(combo + 1, rules.comboCap)
         gemBurst = BurstEffect(angle: collectedAngle, startedAt: now)
         sensory.collected()
         applyDifficultyChange()
         spawnGem()
+        wasInGemRange = false
+    }
+
+    private var scoreIncrement: Int {
+        let multiplier = effectiveModeID == .rush60 || effectiveModeID == .precisionPulse ? combo : 1
+        return economy.pointsPerGem * multiplier
     }
 
     private func applyDifficultyChange() {
@@ -167,10 +238,32 @@ final class GameEngine {
         case .addObstacle:
             addObstacle()
         case .increaseObstacleSpeed(let multiplier):
-            for index in obstacles.indices {
-                obstacles[index].speed *= multiplier
-            }
+            scaleObstacleSpeed(by: multiplier)
         }
+    }
+
+    private func updateWaveIfNeeded() {
+        guard effectiveModeID == .waveSurvival,
+              let waveDuration = rules.waveDuration,
+              let finalWave = rules.finalWave else { return }
+        if sessionElapsed >= waveDuration * Double(finalWave) {
+            currentWave = finalWave
+            completeRun()
+            return
+        }
+        let targetWave = min(finalWave, Int(sessionElapsed / waveDuration) + 1)
+        while currentWave < targetWave {
+            currentWave += 1
+            advanceWaveHazards()
+        }
+    }
+
+    private func advanceWaveHazards() {
+        guard obstacles.count < economy.obstacleLimit else {
+            scaleObstacleSpeed(by: 1.06)
+            return
+        }
+        addObstacle()
     }
 
     private func addObstacle() {
@@ -184,10 +277,24 @@ final class GameEngine {
         )
     }
 
+    private func scaleObstacleSpeed(by multiplier: Double) {
+        for index in obstacles.indices {
+            obstacles[index].speed *= multiplier
+        }
+    }
+
     private func endRun(at now: Date) {
         state = .over
+        runOutcome = .collision
         collisionEffect = CollisionEffect(angle: ballAngle, startedAt: now)
+        sensory.stoppedContinuous()
         sensory.collided()
+    }
+
+    private func completeRun() {
+        state = .over
+        runOutcome = .completed
+        sensory.stoppedContinuous()
     }
 
     private func spawnGem() {
@@ -236,6 +343,16 @@ final class GameEngine {
 
     private func randomAngle() -> Double {
         Double.random(in: 0..<AngleMath.fullTurn, using: &random)
+    }
+
+    private func updatePrecisionFeedback() {
+        guard effectiveModeID == .precisionPulse else {
+            sensory.stoppedContinuous()
+            return
+        }
+        let distance = AngleMath.distance(ballAngle, gem.angle)
+        let proximity = max(0, 1 - distance / 0.90)
+        sensory.proximity(proximity, pulseIsActive)
     }
 
     private func expireEffects(at now: Date) {

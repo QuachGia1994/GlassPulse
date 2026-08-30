@@ -4,18 +4,31 @@
 
 ## Positioning
 
-Glass Pulse is for mobile players who want a focused reflex run that starts in one tap and stays readable in under a minute. Its testable difference is one constant-speed orbit controlled only by instant direction reversal, paired with rotating hazards on the same ring.
+Glass Pulse is a focused reflex game built around one recognizable rule: one automatically moving ball, one circular orbit and one tap that reverses direction. Replay variety comes from deterministic rule variants rather than extra controls or duplicated game systems.
 
 ## Retention
 
-The first release keeps one gameplay mechanic. High score, daily streak, collectible shards, and visual themes provide a lightweight return loop without adding level systems to the core run.
+- Classic provides the endless high-score loop.
+- Daily Challenge provides a reproducible calendar-day target, local best and completion streak.
+- Rush, Precision and Wave provide short rule variants while preserving the same motor skill.
+- Shards and themes add lightweight progression without changing collision fairness.
+
+No backend or Game Center exists today, so Daily surfaces say **Local best** and never imply a global leaderboard.
 
 ## Monetization
 
-- Free: full core game; rewarded and interstitial ads may be added only after the first playable build is measured.
-- Plus weekly/monthly: no ads, exclusive theme/pulse variants, and early access to future modes.
-- Production price remains an App Store Connect decision; prices in `Resources/StoreKit.storekit` are local test values.
-- Unsigned CI artifacts are Beta Full Access builds for device testing; they do not weaken or replace production StoreKit verification.
-- D1 and D7 retention are the gate before expanding modes, content, or ad pressure.
+- Free production: Classic + Daily Challenge.
+- Plus weekly/monthly: Rush 60, Precision Pulse, Wave Survival and Prism Plus theme.
+- Purchase presentation uses StoreKit's native subscription UI; verified entitlement remains authoritative.
+- Production price/localization/review status remains an App Store Connect decision; `Resources/StoreKit.storekit` contains local test configuration only.
+- Unsigned CI artifacts use compile-time Beta Full Access for device testing. Beta does not persist a purchase and cannot unlock production builds.
 
-No dark patterns: renewal is disclosed at purchase, restore remains visible, and cancellation stays in the standard App Store subscription controls.
+## Platform surfaces
+
+Daily/Rush can start a local Live Activity containing mode, score, Rush time, Daily streak and Local best. Dynamic Island and Lock Screen support are optional platform surfaces: failure to provision an extension during unsigned re-signing must not block the core game.
+
+## Evidence gates
+
+Renderer migration is evidence-driven. Canvas remains shipping until the feature-flagged SpriteKit benchmark beats it on real 60 Hz and ProMotion devices for p95 frame work and power. `preferredFramesPerSecond: 120` is not a product claim.
+
+No dark patterns: renewal is disclosed by the standard StoreKit surface, restore remains available in production and cancellation stays in App Store subscription controls.

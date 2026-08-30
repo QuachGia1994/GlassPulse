@@ -15,7 +15,7 @@ struct PlusView: View {
                     if store.isBetaFullAccess {
                         betaAccessStatus
                     } else {
-                        purchaseOptions
+                        subscriptionStore
                         restoreButton
                         legalNote
                     }
@@ -23,6 +23,7 @@ struct PlusView: View {
                 .padding()
             }
             .navigationTitle("Glass Pulse Plus")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Đóng") { dismiss() }
@@ -49,21 +50,21 @@ struct PlusView: View {
 
     private var heroTitle: String {
         if store.isBetaFullAccess { return "Beta Full Access" }
-        return store.isPlusUnlocked ? "Plus đang hoạt động" : "Mở nhịp chơi riêng"
+        return store.isPlusUnlocked ? "Plus đang hoạt động" : "Mở thêm mode"
     }
 
     private var heroSubtitle: String {
         if store.isBetaFullAccess {
-            return "Toàn bộ theme và pulse đã mở để kiểm thử bản unsigned."
+            return "Toàn bộ mode và theme đã mở để kiểm thử bản unsigned."
         }
-        return "Tắt quảng cáo, mở theme Prism Plus và nhận mode mới sớm hơn."
+        return "Mở Rush 60, Precision Pulse, Wave Survival và theme Prism Plus."
     }
 
     private var benefits: some View {
         VStack(alignment: .leading, spacing: 10) {
-            benefit("Không có quảng cáo", systemImage: "rectangle.slash")
-            benefit("Theme và pulse độc quyền", systemImage: "paintpalette.fill")
-            benefit("Truy cập sớm mode mới", systemImage: "clock.badge.checkmark")
+            benefit("Rush 60, Precision Pulse, Wave Survival", systemImage: "square.grid.2x2.fill")
+            benefit("Theme Prism Plus", systemImage: "paintpalette.fill")
+            benefit("Classic và Daily vẫn miễn phí", systemImage: "checkmark.circle.fill")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
@@ -82,60 +83,23 @@ struct PlusView: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
-    @ViewBuilder
-    private var purchaseOptions: some View {
-        if store.products.isEmpty {
-            if store.isBusy {
-                ProgressView("Đang tải gói Plus")
-            } else {
-                Text(store.errorMessage ?? "Gói Plus chưa sẵn sàng.")
+    private var subscriptionStore: some View {
+        VStack(spacing: 10) {
+            SubscriptionStoreView(productIDs: PlusStore.productIDs.sorted())
+                .frame(minHeight: 260)
+            if let notice = store.notice {
+                Text(notice)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                Button("Tải lại") {
-                    Task { await store.loadProducts() }
-                }
-                .buttonStyle(.borderedProminent)
             }
-        } else {
-            VStack(spacing: 10) {
-                ForEach(store.products, id: \.id) { product in
-                    productButton(product)
-                }
+            if let error = store.errorMessage {
+                Text(error)
+                    .font(.footnote)
+                    .foregroundStyle(.red)
+                    .multilineTextAlignment(.center)
             }
         }
-
-        if let notice = store.notice {
-            Text(notice)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-
-        if let error = store.errorMessage, !store.products.isEmpty {
-            Text(error)
-                .font(.footnote)
-                .foregroundStyle(.red)
-                .multilineTextAlignment(.center)
-        }
-    }
-
-    private func productButton(_ product: Product) -> some View {
-        Button {
-            Task { await store.purchase(product) }
-        } label: {
-            HStack {
-                Text(PlusPlan(productID: product.id)?.title ?? product.displayName)
-                Spacer()
-                Text(product.displayPrice)
-                    .monospacedDigit()
-            }
-            .font(.headline)
-            .padding(.vertical, 8)
-        }
-        .buttonStyle(.borderedProminent)
-        .tint(.cyan)
-        .disabled(store.isBusy || store.isPlusUnlocked)
     }
 
     private var restoreButton: some View {
@@ -147,7 +111,7 @@ struct PlusView: View {
     }
 
     private var legalNote: some View {
-        Text("Gói tự động gia hạn theo kỳ đã chọn. Bạn có thể quản lý hoặc hủy trong cài đặt App Store.")
+        Text("Gói tự động gia hạn theo kỳ đã chọn. Quản lý hoặc hủy trong cài đặt App Store.")
             .font(.caption2)
             .foregroundStyle(.tertiary)
             .multilineTextAlignment(.center)

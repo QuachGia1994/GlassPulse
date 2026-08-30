@@ -127,6 +127,141 @@ final class GameEngineTests: XCTestCase {
         }
     }
 
+    @MainActor
+    func testRushCompletesAtSixtySecondsWithoutPhysicsJump() {
+        let session = GameSessionContext.standard(modeID: .rush60, seed: 21)
+        let engine = GameEngine(scenario: safeScenario, session: session)
+        let start = Date(timeIntervalSinceReferenceDate: 700)
+
+        engine.handleTap(now: start)
+        engine.advance(to: start.addingTimeInterval(60))
+
+        XCTAssertEqual(engine.state, .over)
+        XCTAssertEqual(engine.runOutcome, .completed)
+        XCTAssertEqual(engine.remainingTime, 0)
+        XCTAssertEqual(engine.ballAngle, 0, accuracy: 0.000_001)
+    }
+
+    @MainActor
+    func testRushComboRaisesDeterministicScore() {
+        let economy = GameEconomy(
+            pointsPerGem: 1,
+            difficultyInterval: 1_000,
+            obstacleLimit: 3,
+            obstacleSpeedMultiplier: 1.04,
+            gemCollectionRadius: 10,
+            gemObstacleMargin: 0.60
+        )
+        let session = GameSessionContext.standard(modeID: .rush60, seed: 22)
+        let engine = GameEngine(economy: economy, scenario: safeScenario, session: session)
+        let start = Date(timeIntervalSinceReferenceDate: 800)
+
+        engine.handleTap(now: start)
+        engine.advance(to: start.addingTimeInterval(0.1))
+        engine.advance(to: start.addingTimeInterval(0.2))
+
+        XCTAssertEqual(engine.score, 3)
+        XCTAssertEqual(engine.combo, 3)
+    }
+
+    @MainActor
+    func testPrecisionRejectsInactivePulseWithoutAwarding() {
+        let scenario = GameScenario(
+            ballAngle: 0,
+            direction: 1,
+            obstacles: [Obstacle(angle: .pi, width: 0.5, speed: 0)],
+            gem: Gem(angle: 0.16)
+        )
+        let session = GameSessionContext.standard(modeID: .precisionPulse, seed: 23)
+        let engine = GameEngine(scenario: scenario, session: session)
+        let start = Date(timeIntervalSinceReferenceDate: 900)
+
+        engine.handleTap(now: start)
+        engine.advance(to: start.addingTimeInterval(0.8))
+
+        XCTAssertFalse(engine.pulseIsActive)
+        XCTAssertEqual(engine.score, 0)
+        XCTAssertEqual(engine.combo, 1)
+    }
+
+    @MainActor
+    func testWaveTransitionAddsHazardWithBallClearance() {
+        let session = GameSessionContext.standard(modeID: .waveSurvival, seed: 24)
+        let engine = GameEngine(scenario: safeScenario, session: session)
+        let start = Date(timeIntervalSinceReferenceDate: 1_000)
+
+        engine.handleTap(now: start)
+        engine.advance(to: start.addingTimeInterval(8.1))
+
+        XCTAssertEqual(engine.currentWave, 2)
+        XCTAssertEqual(engine.obstacles.count, 2)
+        let added = engine.obstacles[1]
+        XCTAssertGreaterThanOrEqual(
+            AngleMath.distance(added.angle, 0),
+            added.width / 2 + 0.80
+        )
+    }
+
+    @MainActor
+    func testWaveFinalBoundaryCompletesRun() {
+        let session = GameSessionContext.standard(modeID: .waveSurvival, seed: 25)
+        let engine = GameEngine(scenario: safeScenario, session: session)
+        let start = Date(timeIntervalSinceReferenceDate: 1_100)
+
+        engine.handleTap(now: start)
+        engine.advance(to: start.addingTimeInterval(40))
+
+        XCTAssertEqual(engine.currentWave, 5)
+        XCTAssertEqual(engine.runOutcome, .completed)
+        XCTAssertEqual(engine.state, .over)
+    }
+
+    func testDailyContextIsStableForCalendarDayAndVersion() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try XCTUnwrap(TimeZone(identifier: "America/Los_Angeles"))
+        let date = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 3, day: 8, hour: 1)))
+        let sameDay = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 3, day: 8, hour: 18)))
+        let nextDay = try XCTUnwrap(calendar.date(byAdding: .day, value: 1, to: date))
+
+        let first = GameSessionContext.daily(date: date, calendar: calendar)
+        let second = GameSessionContext.daily(date: sameDay, calendar: calendar)
+        let next = GameSessionContext.daily(date: nextDay, calendar: calendar)
+
+        XCTAssertEqual(first, second)
+        XCTAssertNotEqual(first.dailyKey, next.dailyKey)
+        XCTAssertNotEqual(first.seed, next.seed)
+    }
+
+    func testDailyClassicAndPrecisionHaveFiniteCompletionWindow() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try XCTUnwrap(TimeZone(secondsFromGMT: 0))
+        var checkedCount = 0
+
+        for dayOffset in 0..<64 {
+            let date = Date(timeIntervalSince1970: 1_700_000_000 + Double(dayOffset * 86_400))
+            let session = GameSessionContext.daily(date: date, calendar: calendar)
+            guard session.effectiveModeID == .classic || session.effectiveModeID == .precisionPulse else {
+                continue
+            }
+            checkedCount += 1
+            XCTAssertEqual(session.rules.sessionDuration, 60)
+        }
+        XCTAssertGreaterThan(checkedCount, 0)
+    }
+
+    @MainActor
+    func testTenThousandSeededInitialScenariosRemainSafe() {
+        for seed in 0..<10_000 {
+            let engine = GameEngine(seed: UInt64(seed))
+            for obstacle in engine.obstacles {
+                XCTAssertGreaterThanOrEqual(
+                    AngleMath.distance(engine.gem.angle, obstacle.angle),
+                    obstacle.width / 2 + engine.economy.gemObstacleMargin
+                )
+            }
+        }
+    }
+
     private var safeScenario: GameScenario {
         GameScenario(
             ballAngle: 0,

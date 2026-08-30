@@ -54,5 +54,41 @@ final class PlusStoreTests: XCTestCase {
 
         XCTAssertFalse(freeAccess.hasPlus)
         XCTAssertTrue(subscribedAccess.hasPlus)
+        XCTAssertTrue(freeAccess.canUse(.classic))
+        XCTAssertTrue(freeAccess.canUse(.dailyChallenge))
+        XCTAssertFalse(freeAccess.canUse(.rush60))
+        XCTAssertTrue(subscribedAccess.canUse(.rush60))
+    }
+
+    func testSubscriptionGroupIdentityMatchesStoreKitConfiguration() {
+        XCTAssertEqual(
+            PlusStore.subscriptionGroupID,
+            "5A15D10B-9197-4D8A-A026-77A5ECCE01A1"
+        )
+    }
+
+    func testRevokedOrExpiredSubscriptionsAreInactive() {
+        let now = Date(timeIntervalSinceReferenceDate: 2_000)
+        XCTAssertFalse(
+            SubscriptionEntitlementPolicy.isActive(
+                revocationDate: now,
+                expirationDate: now.addingTimeInterval(100),
+                now: now
+            )
+        )
+        XCTAssertFalse(
+            SubscriptionEntitlementPolicy.isActive(
+                revocationDate: nil,
+                expirationDate: now.addingTimeInterval(-1),
+                now: now
+            )
+        )
+        XCTAssertTrue(
+            SubscriptionEntitlementPolicy.isActive(
+                revocationDate: nil,
+                expirationDate: now.addingTimeInterval(100),
+                now: now
+            )
+        )
     }
 }

@@ -4,6 +4,7 @@ import Observation
 enum PlayerProfileError: Error, Equatable, LocalizedError {
     case insufficientShards(required: Int, available: Int)
     case plusRequired
+    case modePlusRequired
 
     var errorDescription: String? {
         switch self {
@@ -11,6 +12,8 @@ enum PlayerProfileError: Error, Equatable, LocalizedError {
             "Cần \(required) shard, hiện có \(available)."
         case .plusRequired:
             "Theme này chỉ dành cho Glass Pulse Plus."
+        case .modePlusRequired:
+            "Mode này chỉ dành cho Glass Pulse Plus."
         }
     }
 }
@@ -20,11 +23,18 @@ enum PlayerProfileError: Error, Equatable, LocalizedError {
 final class PlayerProfile {
     private enum Key {
         static let bestScore = "glassPulse.bestScore"
-        static let dailyStreak = "glassPulse.dailyStreak"
-        static let lastPlayedDate = "glassPulse.lastPlayedDate"
+        static let legacyDailyStreak = "glassPulse.dailyStreak"
+        static let legacyLastPlayedDate = "glassPulse.lastPlayedDate"
+        static let dailyCompletionMigration = "glassPulse.dailyCompletionMigration.v1"
+        static let dailyCompletionStreak = "glassPulse.dailyCompletionStreak"
+        static let lastDailyCompletionKey = "glassPulse.lastDailyCompletionKey"
+        static let dailyBestKey = "glassPulse.dailyBestKey"
+        static let dailyBestScore = "glassPulse.dailyBestScore"
+        static let dailyRewardKey = "glassPulse.dailyRewardKey"
         static let totalShards = "glassPulse.totalShards"
         static let selectedTheme = "glassPulse.selectedTheme"
         static let ownedThemes = "glassPulse.ownedThemes"
+        static let selectedMode = "glassPulse.selectedMode"
     }
 
     @ObservationIgnored private let defaults: UserDefaults
@@ -34,11 +44,23 @@ final class PlayerProfile {
     }
 
     private(set) var dailyStreak: Int {
-        didSet { defaults.set(dailyStreak, forKey: Key.dailyStreak) }
+        didSet { defaults.set(dailyStreak, forKey: Key.dailyCompletionStreak) }
     }
 
-    private(set) var lastPlayedDate: Date? {
-        didSet { defaults.set(lastPlayedDate, forKey: Key.lastPlayedDate) }
+    private(set) var lastDailyCompletionKey: String? {
+        didSet { defaults.set(lastDailyCompletionKey, forKey: Key.lastDailyCompletionKey) }
+    }
+
+    private(set) var dailyBestKey: String? {
+        didSet { defaults.set(dailyBestKey, forKey: Key.dailyBestKey) }
+    }
+
+    private(set) var dailyBestScore: Int {
+        didSet { defaults.set(dailyBestScore, forKey: Key.dailyBestScore) }
+    }
+
+    private(set) var dailyRewardKey: String? {
+        didSet { defaults.set(dailyRewardKey, forKey: Key.dailyRewardKey) }
     }
 
     private(set) var totalShards: Int {
@@ -53,15 +75,36 @@ final class PlayerProfile {
         didSet { defaults.set(ownedThemeIDs.sorted(), forKey: Key.ownedThemes) }
     }
 
+    private(set) var selectedModeID: GameModeID {
+        didSet { defaults.set(selectedModeID.rawValue, forKey: Key.selectedMode) }
+    }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         bestScore = defaults.integer(forKey: Key.bestScore)
-        dailyStreak = defaults.integer(forKey: Key.dailyStreak)
-        lastPlayedDate = defaults.object(forKey: Key.lastPlayedDate) as? Date
         totalShards = defaults.integer(forKey: Key.totalShards)
         selectedThemeID = defaults.string(forKey: Key.selectedTheme) ?? PulseTheme.clarity.id
         let storedThemes = Set(defaults.stringArray(forKey: Key.ownedThemes) ?? [])
         ownedThemeIDs = storedThemes.union([PulseTheme.clarity.id])
+        selectedModeID = defaults.string(forKey: Key.selectedMode)
+            .flatMap(GameModeID.init(rawValue:)) ?? .classic
+
+        if defaults.bool(forKey: Key.dailyCompletionMigration) {
+            dailyStreak = defaults.integer(forKey: Key.dailyCompletionStreak)
+            lastDailyCompletionKey = defaults.string(forKey: Key.lastDailyCompletionKey)
+            dailyBestKey = defaults.string(forKey: Key.dailyBestKey)
+            dailyBestScore = defaults.integer(forKey: Key.dailyBestScore)
+            dailyRewardKey = defaults.string(forKey: Key.dailyRewardKey)
+        } else {
+            dailyStreak = 0
+            lastDailyCompletionKey = nil
+            dailyBestKey = nil
+            dailyBestScore = 0
+            dailyRewardKey = nil
+            defaults.set(true, forKey: Key.dailyCompletionMigration)
+            defaults.removeObject(forKey: Key.legacyDailyStreak)
+            defaults.removeObject(forKey: Key.legacyLastPlayedDate)
+        }
     }
 
     func activeTheme(access: FeatureAccess) -> PulseTheme {
@@ -70,6 +113,10 @@ final class PlayerProfile {
         }
         guard canUse(selected, access: access) else { return .clarity }
         return selected
+    }
+
+    func activeMode(access: FeatureAccess) -> GameModeID {
+        access.canUse(selectedModeID) ? selectedModeID : .classic
     }
 
     func canUse(_ theme: PulseTheme, access: FeatureAccess) -> Bool {
@@ -105,24 +152,61 @@ final class PlayerProfile {
         }
     }
 
-    func registerDailyPlay(now: Date = .now, calendar: Calendar = .current) {
-        let today = calendar.startOfDay(for: now)
-        guard let lastPlayedDate else {
-            dailyStreak = 1
-            self.lastPlayedDate = today
-            return
-        }
-
-        let previousDay = calendar.startOfDay(for: lastPlayedDate)
-        guard previousDay != today else { return }
-        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)
-        dailyStreak = previousDay == yesterday ? max(1, dailyStreak + 1) : 1
-        self.lastPlayedDate = today
+    func select(
+        mode modeID: GameModeID,
+        access: FeatureAccess
+    ) -> Result<Void, PlayerProfileError> {
+        guard access.canUse(modeID) else { return .failure(.modePlusRequired) }
+        selectedModeID = modeID
+        return .success(())
     }
 
     func recordRun(score: Int, reward: Int) {
         bestScore = max(bestScore, score)
         totalShards += max(0, reward)
+    }
+
+    func dailyBest(for dayKey: String?) -> Int {
+        guard let dayKey, dailyBestKey == dayKey else { return 0 }
+        return dailyBestScore
+    }
+
+    @discardableResult
+    func recordDailyCompletion(
+        dayKey: String,
+        date: Date,
+        score: Int,
+        firstClearBonus: Int,
+        calendar: Calendar
+    ) -> Int {
+        refreshDailyBest(dayKey: dayKey, score: score)
+        advanceDailyStreak(dayKey: dayKey, date: date, calendar: calendar)
+        guard dailyRewardKey != dayKey else { return 0 }
+        dailyRewardKey = dayKey
+        let bonus = max(0, firstClearBonus)
+        totalShards += bonus
+        return bonus
+    }
+
+    private func refreshDailyBest(dayKey: String, score: Int) {
+        if dailyBestKey != dayKey {
+            dailyBestKey = dayKey
+            dailyBestScore = max(0, score)
+            return
+        }
+        dailyBestScore = max(dailyBestScore, score)
+    }
+
+    private func advanceDailyStreak(
+        dayKey: String,
+        date: Date,
+        calendar: Calendar
+    ) {
+        guard lastDailyCompletionKey != dayKey else { return }
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: date)
+            .map { DailyChallenge.key(for: $0, calendar: calendar) }
+        dailyStreak = lastDailyCompletionKey == yesterday ? max(1, dailyStreak + 1) : 1
+        lastDailyCompletionKey = dayKey
     }
 
     private func purchaseAndSelect(

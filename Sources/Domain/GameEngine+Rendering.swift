@@ -7,17 +7,21 @@ extension GameEngine {
         now: Date,
         theme: PulseTheme
     ) {
-        advance(to: now)
+        RenderDiagnostics.measureSimulation {
+            advance(to: now)
+        }
         guard size.width > 0, size.height > 0 else { return }
 
-        let geometry = renderGeometry(size: size, now: now, theme: theme)
-        drawAmbientRings(in: &context, geometry: geometry, theme: theme)
-        for obstacle in obstacles {
-            drawObstacle(obstacle, in: &context, geometry: geometry, theme: theme)
+        RenderDiagnostics.measureCanvasFrame {
+            let geometry = renderGeometry(size: size, now: now, theme: theme)
+            drawAmbientRings(in: &context, geometry: geometry, theme: theme)
+            for obstacle in obstacles {
+                drawObstacle(obstacle, in: &context, geometry: geometry, theme: theme)
+            }
+            drawGem(in: &context, geometry: geometry, theme: theme)
+            drawEffects(in: &context, geometry: geometry, theme: theme, now: now)
+            drawBall(in: &context, geometry: geometry, theme: theme, now: now)
         }
-        drawGem(in: &context, geometry: geometry, theme: theme)
-        drawEffects(in: &context, geometry: geometry, theme: theme, now: now)
-        drawBall(in: &context, geometry: geometry, theme: theme, now: now)
     }
 
     private func renderGeometry(
@@ -112,12 +116,26 @@ extension GameEngine {
         theme: PulseTheme
     ) {
         let center = point(on: geometry.center, radius: geometry.orbitRadius, angle: gem.angle)
-        let gemPath = diamond(center: center, radius: 7)
+        let isPrecision = effectiveModeID == .precisionPulse
+        let active = !isPrecision || pulseIsActive
+        let radius: CGFloat = active ? 8.5 : 6
+        let gemPath = diamond(center: center, radius: radius)
         context.drawLayer { layer in
-            layer.addFilter(.shadow(color: theme.palette.gem.opacity(0.72), radius: 10))
-            layer.fill(gemPath, with: .color(theme.palette.gem))
+            layer.addFilter(.shadow(color: theme.palette.gem.opacity(active ? 0.78 : 0.28), radius: active ? 12 : 4))
+            layer.fill(gemPath, with: .color(theme.palette.gem.opacity(active ? 1 : 0.42)))
         }
-        context.fill(diamond(center: CGPoint(x: center.x - 2, y: center.y - 2), radius: 2.2), with: .color(.white.opacity(0.86)))
+        if isPrecision {
+            let haloRadius: CGFloat = active ? 15 : 10
+            context.stroke(
+                ellipse(center: center, radius: haloRadius),
+                with: .color(theme.palette.gem.opacity(active ? 0.9 : 0.24)),
+                style: StrokeStyle(lineWidth: active ? 2.4 : 1.2, dash: active ? [] : [3, 3])
+            )
+        }
+        context.fill(
+            diamond(center: CGPoint(x: center.x - 2, y: center.y - 2), radius: active ? 2.4 : 1.6),
+            with: .color(.white.opacity(active ? 0.86 : 0.45))
+        )
     }
 
     private func drawBall(

@@ -6,6 +6,10 @@ struct FeatureAccess: Equatable, Sendable {
         isBetaFullAccess || hasActivePlusSubscription
     }
 
+    func canUse(_ modeID: GameModeID) -> Bool {
+        !modeID.requiresPlus || hasPlus
+    }
+
     static func current(
         hasActivePlusSubscription: Bool
     ) -> FeatureAccess {

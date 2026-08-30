@@ -76,6 +76,7 @@ jobs:
             -derivedDataPath .build \
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
+            -showBuildTimingSummary \
             CODE_SIGNING_ALLOWED=NO \
             build
 
@@ -123,11 +124,27 @@ jobs:
             -configuration Release \
             -archivePath .build/GlassPulse.xcarchive \
             -destination 'generic/platform=iOS' \
+            -showBuildTimingSummary \
             'SWIFT_ACTIVE_COMPILATION_CONDITIONS=$(inherited) GLASS_PULSE_BETA' \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             archive
+
+      - name: Verify archived resources and App Icon
+        run: |
+          set -euo pipefail
+          app_path=".build/GlassPulse.xcarchive/Products/Applications/GlassPulse.app"
+          info_path="$app_path/Info.plist"
+          assets_path="$app_path/Assets.car"
+
+          test -f "$assets_path" || { echo "Assets.car is missing from the archive."; exit 1; }
+          test -d "$app_path/PlugIns/GlassPulseWidgetExtension.appex" || { echo "Live Activity extension is missing from the archive."; exit 1; }
+          plutil -p "$info_path" | tee .build/archive-info.txt
+          grep -q 'CFBundleIcons' .build/archive-info.txt || { echo "CFBundleIcons is missing."; exit 1; }
+          grep -q 'AppIcon' .build/archive-info.txt || { echo "AppIcon is missing from Info.plist icon metadata."; exit 1; }
+          xcrun assetutil --info "$assets_path" | tee .build/archive-assets.json
+          grep -q 'AppIcon' .build/archive-assets.json || { echo "AppIcon is missing from compiled Assets.car."; exit 1; }
 
       - name: Package unsigned IPA
         run: |
@@ -148,6 +165,36 @@ jobs:
           )
           test -s .build/GlassPulse.ipa
           shasum -a 256 .build/GlassPulse.ipa
+
+      - name: Enforce IPA and installed-size budgets
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          budget = 25 * 1024 * 1024
+          ipa = Path('.build/GlassPulse.ipa')
+          app = Path('.build/GlassPulse.xcarchive/Products/Applications/GlassPulse.app')
+
+          def tree_size(path: Path) -> int:
+              return sum(item.stat().st_size for item in path.rglob('*') if item.is_file())
+
+          measurements = [('compressed IPA', ipa.stat().st_size), ('GlassPulse.app', tree_size(app))]
+          measurements.extend(
+              (appex.name, tree_size(appex))
+              for appex in sorted((app / 'PlugIns').glob('*.appex'))
+          )
+
+          failed = False
+          for label, size in measurements:
+              print(f'{label}: {size} bytes ({size / 1024 / 1024:.2f} MiB)')
+              if size >= budget:
+                  print(f'ERROR: {label} must remain below 25 MiB.')
+                  failed = True
+
+          if failed:
+              raise SystemExit(1)
+          PY
 
       - name: Upload unsigned IPA
         uses: actions/upload-artifact@v4

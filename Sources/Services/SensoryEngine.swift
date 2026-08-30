@@ -1,4 +1,5 @@
 import AVFAudio
+import CoreHaptics
 import Observation
 import UIKit
 
@@ -6,17 +7,22 @@ struct SensoryClient: Sendable {
     let reversed: @MainActor @Sendable () -> Void
     let collected: @MainActor @Sendable () -> Void
     let collided: @MainActor @Sendable () -> Void
+    let proximity: @MainActor @Sendable (Double, Bool) -> Void
+    let stoppedContinuous: @MainActor @Sendable () -> Void
 
     static let silent = SensoryClient(
         reversed: {},
         collected: {},
-        collided: {}
+        collided: {},
+        proximity: { _, _ in },
+        stoppedContinuous: {}
     )
 }
 
 enum SensoryError: Error, Equatable, LocalizedError {
     case audioFormatUnavailable
     case playbackFailed(String)
+    case hapticFailed(String)
 
     var errorDescription: String? {
         switch self {
@@ -24,11 +30,13 @@ enum SensoryError: Error, Equatable, LocalizedError {
             "Không thể tạo định dạng âm thanh."
         case .playbackFailed(let reason):
             "Không thể phát âm thanh: \(reason)"
+        case .hapticFailed(let reason):
+            "Không thể phát haptic: \(reason)"
         }
     }
 }
 
-private enum SensoryEvent {
+private enum SensoryEvent: CaseIterable, Hashable {
     case reverse
     case collect
     case collision
@@ -67,18 +75,45 @@ final class SensoryEngine {
     @ObservationIgnored private let collectFeedback = UIImpactFeedbackGenerator(style: .rigid)
     @ObservationIgnored private let collisionFeedback = UINotificationFeedbackGenerator()
     @ObservationIgnored private var audioFormat: AVAudioFormat?
+    @ObservationIgnored private var toneBuffers: [SensoryEvent: AVAudioPCMBuffer] = [:]
+    @ObservationIgnored private var hapticEngine: CHHapticEngine?
+    @ObservationIgnored private var continuousPlayer: CHHapticAdvancedPatternPlayer?
+    @ObservationIgnored private var lastProximityUpdate: Date?
+    @ObservationIgnored private var audioInterruptionObserver: NSObjectProtocol?
+
+    var soundEnabled = true {
+        didSet {
+            if !soundEnabled {
+                eventNode.stop()
+                audioEngine.pause()
+            }
+        }
+    }
+
+    var hapticsEnabled = true {
+        didSet {
+            if !hapticsEnabled { stopContinuousHaptic() }
+        }
+    }
 
     private(set) var lastError: SensoryError?
+    private(set) var supportsAdaptiveHaptics = false
 
     init() {
         configureAudioGraph()
+        configureHaptics()
+        observeAudioInterruptions()
     }
 
     var client: SensoryClient {
         SensoryClient(
             reversed: { [weak self] in self?.play(.reverse) },
             collected: { [weak self] in self?.play(.collect) },
-            collided: { [weak self] in self?.play(.collision) }
+            collided: { [weak self] in self?.play(.collision) },
+            proximity: { [weak self] proximity, pulseActive in
+                self?.updateProximity(proximity, pulseActive: pulseActive)
+            },
+            stoppedContinuous: { [weak self] in self?.stopContinuousHaptic() }
         )
     }
 
@@ -90,13 +125,72 @@ final class SensoryEngine {
         audioFormat = format
         audioEngine.attach(eventNode)
         audioEngine.connect(eventNode, to: audioEngine.mainMixerNode, format: format)
+        toneBuffers = Dictionary(
+            uniqueKeysWithValues: SensoryEvent.allCases.compactMap { event in
+                makeToneBuffer(for: event).map { (event, $0) }
+            }
+        )
+    }
+
+    private func observeAudioInterruptions() {
+        audioInterruptionObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.interruptionNotification,
+            object: AVAudioSession.sharedInstance(),
+            queue: nil
+        ) { [weak self] notification in
+            let rawType = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt
+            Task { @MainActor [weak self] in
+                self?.handleAudioInterruption(rawType)
+            }
+        }
+    }
+
+    private func handleAudioInterruption(_ rawType: UInt?) {
+        guard let rawType,
+              let type = AVAudioSession.InterruptionType(rawValue: rawType) else { return }
+        switch type {
+        case .began:
+            eventNode.pause()
+            audioEngine.pause()
+            stopContinuousHaptic()
+        case .ended:
+            lastError = nil
+        @unknown default:
+            return
+        }
+    }
+
+    private func configureHaptics() {
+        supportsAdaptiveHaptics = CHHapticEngine.capabilitiesForHardware().supportsHaptics
+        guard supportsAdaptiveHaptics else { return }
+        do {
+            let engine = try CHHapticEngine()
+            engine.playsHapticsOnly = true
+            engine.isAutoShutdownEnabled = true
+            engine.resetHandler = { [weak self] in
+                Task { @MainActor [weak self] in
+                    self?.handleHapticReset()
+                }
+            }
+            engine.stoppedHandler = { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.continuousPlayer = nil
+                    self?.lastProximityUpdate = nil
+                }
+            }
+            hapticEngine = engine
+        } catch {
+            supportsAdaptiveHaptics = false
+            lastError = .hapticFailed(error.localizedDescription)
+        }
     }
 
     private func play(_ event: SensoryEvent) {
-        playHaptic(event)
+        if hapticsEnabled { playTransientHaptic(event) }
+        guard soundEnabled else { return }
         do {
             try startAudioIfNeeded()
-            guard let buffer = makeToneBuffer(for: event) else {
+            guard let buffer = toneBuffers[event] else {
                 throw SensoryError.audioFormatUnavailable
             }
             eventNode.stop()
@@ -111,7 +205,7 @@ final class SensoryEngine {
         }
     }
 
-    private func playHaptic(_ event: SensoryEvent) {
+    private func playTransientHaptic(_ event: SensoryEvent) {
         switch event {
         case .reverse:
             reverseFeedback.prepare()
@@ -122,6 +216,81 @@ final class SensoryEngine {
         case .collision:
             collisionFeedback.prepare()
             collisionFeedback.notificationOccurred(.error)
+        }
+    }
+
+    private func updateProximity(_ proximity: Double, pulseActive: Bool) {
+        guard hapticsEnabled, supportsAdaptiveHaptics else { return }
+        let clamped = min(max(proximity, 0), 1)
+        guard clamped >= 0.15 else {
+            stopContinuousHaptic()
+            return
+        }
+        let now = Date.now
+        if let lastProximityUpdate,
+           now.timeIntervalSince(lastProximityUpdate) < 1.0 / 25.0 { return }
+        self.lastProximityUpdate = now
+
+        do {
+            let player = try continuousHapticPlayer()
+            let intensity = Float((0.18 + 0.72 * clamped) * (pulseActive ? 1 : 0.42))
+            let sharpness = Float(-0.45 + 0.90 * clamped)
+            try player.sendParameters(
+                [
+                    CHHapticDynamicParameter(parameterID: .hapticIntensityControl, value: intensity, relativeTime: 0),
+                    CHHapticDynamicParameter(parameterID: .hapticSharpnessControl, value: sharpness, relativeTime: 0)
+                ],
+                atTime: CHHapticTimeImmediate
+            )
+            lastError = nil
+        } catch {
+            lastError = .hapticFailed(error.localizedDescription)
+            stopContinuousHaptic()
+        }
+    }
+
+    private func continuousHapticPlayer() throws -> CHHapticAdvancedPatternPlayer {
+        if let continuousPlayer { return continuousPlayer }
+        guard let hapticEngine else { throw SensoryError.hapticFailed("Core Haptics unavailable") }
+        try hapticEngine.start()
+        let event = CHHapticEvent(
+            eventType: .hapticContinuous,
+            parameters: [
+                CHHapticEventParameter(parameterID: .hapticIntensity, value: 1),
+                CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.5)
+            ],
+            relativeTime: 0,
+            duration: 1
+        )
+        let pattern = try CHHapticPattern(events: [event], parameters: [])
+        let player = try hapticEngine.makeAdvancedPlayer(with: pattern)
+        player.loopEnabled = true
+        try player.start(atTime: CHHapticTimeImmediate)
+        continuousPlayer = player
+        return player
+    }
+
+    private func stopContinuousHaptic() {
+        guard let continuousPlayer else {
+            lastProximityUpdate = nil
+            return
+        }
+        do {
+            try continuousPlayer.stop(atTime: CHHapticTimeImmediate)
+        } catch {
+            lastError = .hapticFailed(error.localizedDescription)
+        }
+        self.continuousPlayer = nil
+        lastProximityUpdate = nil
+    }
+
+    private func handleHapticReset() {
+        continuousPlayer = nil
+        lastProximityUpdate = nil
+        do {
+            try hapticEngine?.start()
+        } catch {
+            lastError = .hapticFailed(error.localizedDescription)
         }
     }
 

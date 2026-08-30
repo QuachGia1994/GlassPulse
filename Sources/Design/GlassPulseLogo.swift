@@ -11,7 +11,6 @@ struct GlassPulseLogo: View {
             ball
         }
         .frame(width: size, height: size)
-        .drawingGroup()
         .accessibilityHidden(true)
     }
 

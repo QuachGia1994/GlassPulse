@@ -1,10 +1,11 @@
 # Glass Pulse
 
-Glass Pulse is a one-touch SwiftUI orbit game. The ball moves at constant speed around a breathing glass ring; each tap reverses direction while rotating obstacle arcs and collectible gems share the orbit.
+Glass Pulse is a one-touch SwiftUI orbit game. One controlled ball moves automatically on one ring; every gameplay mode keeps the same tap-to-reverse control and deterministic simulation engine.
 
 ## Requirements
 
-- Xcode 27 with the Swift 6.4 toolchain
+- Xcode 27 with the Swift 6.4 compiler
+- Swift 6 language mode (`SWIFT_VERSION = 6.0`)
 - iOS 18 or newer
 - XcodeGen
 
@@ -16,13 +17,24 @@ xcodegen generate
 open GlassPulse.xcodeproj
 ```
 
-Run the GlassPulse scheme on an iPhone simulator. The scheme attaches `Resources/StoreKit.storekit` for local weekly and monthly Plus testing.
+The generated `GlassPulse` scheme attaches `Resources/StoreKit.storekit` for local weekly/monthly Plus testing. Strict Concurrency and warnings-as-errors are enabled for the project.
+
+## Modes
+
+- **Classic**: original endless rules and regression oracle.
+- **Rush 60**: fixed 60-second run with capped combo scoring.
+- **Precision Pulse**: gem collection only succeeds during the visible pulse window; adaptive haptics are limited to this mode.
+- **Wave Survival**: deterministic timed waves with one ball and safe hazard insertion.
+- **Daily Challenge**: versioned calendar-day seed rotating the same one-ball rule sets; Classic/Precision Daily variants use a finite 60-second completion window. Daily streak and first-clear reward require a completed run.
+
+Production access is Classic + Daily for free users and Rush/Precision/Wave for verified Plus subscribers. The unsigned CI Beta build opens every mode/theme without storing a fake purchase.
 
 ## Controls
 
-- Tap the board to start, then tap again to reverse direction.
-- Use the 44-point Pause/Resume control on the board; opening Theme/Plus or leaving the app automatically pauses an active run.
-- Resume starts from the current time without applying background elapsed time to the simulation.
+- Tap the board to start; each later tap reverses direction immediately.
+- Pause uses one 44-point control; paused board taps do nothing and Resume resets the frame clock.
+- Opening Theme/Plus or backgrounding the app pauses an active run.
+- Mode changes are disabled during an active or paused run.
 
 ## Tests
 
@@ -30,36 +42,48 @@ Run the GlassPulse scheme on an iPhone simulator. The scheme attaches `Resources
 xcodebuild -project GlassPulse.xcodeproj -scheme GlassPulse -destination "platform=iOS Simulator,name=iPhone 17 Pro" test
 ```
 
-The repository CI selects an available iPhone simulator instead of depending on one fixed device name.
+CI selects an available iPhone simulator, runs the standard non-Beta build and tests, then creates the separate unsigned Beta archive. Unit coverage includes Classic regression, mode rules, Daily rollover/DST/reward behavior, subscription access, and a 10,000-seed spawn-safety stress pass. UI coverage includes splash dismissal, pause/resume, accessibility-sized theme selection and starting every mode through a debug-only entitlement harness.
 
-## Cài lên máy
+## Renderer benchmark
 
-Mỗi run CI thành công tạo artifact `GlassPulse-unsigned-IPA-Xcode27` chứa `GlassPulse.ipa`. Artifact này bật **Beta Full Access** để mở toàn bộ theme/pulse khi test; build production vẫn kiểm tra StoreKit bình thường. Đây là IPA **unsigned**, không thể cài trực tiếp từ Files: AltStore hoặc SideStore sẽ ký lại IPA bằng Apple Account trước khi cài.
+Canvas remains the shipping renderer. Debug/Beta builds record `SimulationUpdate` and `CanvasFrame` `OSSignposter` intervals and log Canvas CPU p50/p95/p99 every 240 measured frames.
 
-### AltStore trên Windows
+A SpriteKit `SpriteView` + `SKShapeNode` spike can be enabled only in Debug/Beta with the launch argument:
 
-1. Cài [AltServer và AltStore theo hướng dẫn Windows](https://faq.altstore.io/altstore-classic/how-to-install-altstore-windows).
-2. Giữ AltServer chạy trên PC và để PC cùng mạng Wi-Fi với iPhone.
-3. Tải artifact từ trang **Actions > iOS CI**, giải nén, rồi mở `GlassPulse.ipa` bằng AltStore.
-4. App ký bằng Apple Account miễn phí hết hạn sau 7 ngày. AltStore có thể tự refresh khi AltServer đang chạy và hai thiết bị vẫn cùng mạng; mở AltStore để kiểm tra thời hạn trước khi app hết hạn.
+```text
+--spritekit-benchmark
+```
 
-### SideStore
+The spike consumes the same read-only simulation snapshot and requests 120 preferred frames per second for comparison. This is not evidence of 120 FPS or lower power. Do not switch the shipping renderer or add `CADisableMinimumFrameDurationOnPhone` until Instruments/device measurements show a benefit on both a 60 Hz iPhone and a ProMotion iPhone.
 
-1. SideStore chỉ cần máy tính trong lần cài ban đầu: chuẩn bị [iloader và LocalDevVPN](https://docs.sidestore.io/docs/installation/prerequisites), sau đó [cài SideStore bằng iloader](https://docs.sidestore.io/docs/installation/install).
-2. Sau khi setup, bật LocalDevVPN để cài/refresh `GlassPulse.ipa` ngay trên iPhone; không cần PC cho các lần refresh thông thường.
-3. Tài liệu SideStore hiện liệt kê iOS 26.x, nhưng đã có báo cáo lỗi refresh trên [iOS 26.4](https://github.com/SideStore/SideStore/issues/1222) và [iOS 26.4.1](https://github.com/SideStore/SideStore/issues/1226). Hãy kiểm tra đúng phiên bản iOS, release và issue mới nhất của SideStore trước khi chọn cách này.
+## Unsigned Beta IPA
 
-### Giới hạn tài khoản miễn phí
+Each successful `iOS CI` run uploads `GlassPulse-unsigned-IPA-Xcode27`, containing `GlassPulse.ipa`. The unsigned archive alone receives `GLASS_PULSE_BETA`; normal simulator/production builds continue to require verified StoreKit entitlement.
 
-Theo [SideStore FAQ](https://docs.sidestore.io/docs/faq), Apple Account miễn phí chỉ được kích hoạt tối đa 3 app sideload cùng lúc (tính cả AltStore hoặc SideStore), tối đa 10 App ID khác nhau trong 7 ngày, và mỗi app cần được ký lại sau 7 ngày.
+CI verifies before upload:
 
-TrollStore không phải lựa chọn cho thiết bị mới: dự án chỉ hỗ trợ đến iOS 17.0 và ghi rõ iOS 17.0.1+ sẽ không được hỗ trợ nếu không xuất hiện lỗi CoreTrust mới. Vì vậy [TrollStore](https://github.com/opa334/TrollStore) không dùng được trên iOS 18/26/27.
+- compiled `Assets.car`, `CFBundleIcons`, and `AppIcon` archive metadata;
+- embedded `GlassPulseWidgetExtension.appex`;
+- SHA-256 of the IPA;
+- compressed IPA size, uncompressed `GlassPulse.app` size, and every `.appex` size, each strictly below 25 MiB.
+
+### Live Activity and sideload entitlements
+
+The archive contains a WidgetKit/ActivityKit extension for active Daily/Rush runs. It shows mode, score, Rush time, Daily streak and **Local best** only. No backend/Game Center means no global-rank claim.
+
+No App Group entitlement is required by the current implementation because Live Activity state is supplied directly through ActivityKit. AltStore/SideStore re-signing can consume an additional App ID for the extension and may strip or fail to provision optional extension capabilities depending on the Apple Account and signer. If that happens, the main game remains the required artifact; Lock Screen/Dynamic Island behavior is a device/provisioning verification gate, not a CI claim.
+
+### AltStore / SideStore
+
+Download the artifact from **Actions > iOS CI**, extract `GlassPulse.ipa`, then re-sign/install it with AltStore or SideStore. Free Apple Accounts generally require periodic re-signing and have App ID/app-count limits; an embedded extension may consume additional provisioning capacity. Check the current signer documentation for the exact account limits before installation.
 
 ## Structure
 
-- `Sources/Domain`: deterministic game rules, state, update loop, and Canvas rendering
-- `Sources/Services`: haptic/audio feedback, local player profile, and StoreKit 2 entitlements
-- `Sources/Design`: theme palettes and pulse variants
-- `Sources/Views`: game, theme gallery, and Plus surfaces
-- `Tests`: game-rule, persistence, and product-identity tests
-- `docs`: current product, gameplay, architecture, and build references
+- `Sources/Domain`: deterministic simulation, mode/session rules and Canvas rendering.
+- `Sources/Rendering`: render diagnostics and the feature-flagged SpriteKit benchmark spike.
+- `Sources/Services`: player persistence, StoreKit entitlement, sensory feedback and Live Activity control.
+- `Sources/Views`: game, mode, theme and Plus presentation.
+- `Shared/Activity`: ActivityKit attributes shared by app and extension.
+- `WidgetExtension`: Lock Screen/Dynamic Island Live Activity UI.
+- `Tests` / `UITests`: deterministic rule and UI regression coverage.
+- `docs`: product, gameplay, architecture and build source-of-truth documentation.

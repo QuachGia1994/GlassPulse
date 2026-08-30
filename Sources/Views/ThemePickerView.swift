@@ -26,9 +26,19 @@ struct ThemePickerView: View {
                 .padding()
             }
             .navigationTitle("Theme & Pulse")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Đóng") { dismiss() }
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.body.weight(.semibold))
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .accessibilityLabel("Đóng")
+                    .accessibilityIdentifier("theme.close")
                 }
             }
         }
@@ -51,28 +61,59 @@ struct ThemePickerView: View {
 
     private func themeCard(_ theme: PulseTheme) -> some View {
         let selected = profile.activeTheme(access: plusStore.access) == theme
-        return HStack(spacing: 14) {
-            themePreview(theme)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(theme.title)
-                    .font(.headline)
-                Text(theme.subtitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+        return ViewThatFits(in: .horizontal) {
+            HStack(alignment: .center, spacing: 14) {
+                themePreview(theme)
+                themeDescription(theme)
+                Spacer(minLength: 8)
+                themeAccessory(theme, selected: selected)
             }
-            Spacer(minLength: 8)
-            Button(actionTitle(for: theme, selected: selected)) {
-                select(theme)
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top, spacing: 14) {
+                    themePreview(theme)
+                    themeDescription(theme)
+                }
+                themeAccessory(theme, selected: selected)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(theme.palette.ring)
-            .disabled(selected)
         }
         .padding(14)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .stroke(selected ? theme.palette.ring : .white.opacity(0.08), lineWidth: selected ? 2 : 1)
+        }
+        .accessibilityIdentifier("theme.card.\(theme.id)")
+    }
+
+    private func themeDescription(_ theme: PulseTheme) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(theme.title)
+                .font(.headline)
+            Text(theme.subtitle)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    @ViewBuilder
+    private func themeAccessory(_ theme: PulseTheme, selected: Bool) -> some View {
+        if selected {
+            Label("Đang dùng", systemImage: "checkmark")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
+                .background(.white.opacity(0.12), in: Capsule())
+                .overlay { Capsule().stroke(theme.palette.ring.opacity(0.9), lineWidth: 1) }
+                .accessibilityIdentifier("theme.selected")
+        } else {
+            Button(actionTitle(for: theme)) {
+                select(theme)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(theme.palette.ring)
         }
     }
 
@@ -93,8 +134,7 @@ struct ThemePickerView: View {
         .background(theme.palette.backgroundBottom, in: Circle())
     }
 
-    private func actionTitle(for theme: PulseTheme, selected: Bool) -> String {
-        guard !selected else { return "Đang dùng" }
+    private func actionTitle(for theme: PulseTheme) -> String {
         if profile.canUse(theme, access: plusStore.access) { return "Dùng" }
         switch theme.unlock {
         case .free: return "Dùng"
