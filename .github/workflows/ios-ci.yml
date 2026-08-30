@@ -97,3 +97,60 @@ jobs:
           name: GlassPulse-iOS-Simulator-Xcode27
           path: .build/Build/Products/Debug-iphonesimulator/GlassPulse.app
           if-no-files-found: error
+
+  unsigned-ipa:
+    name: Build unsigned IPA
+    needs: build-test
+    runs-on: xcode-27
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build unsigned device archive
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project GlassPulse.xcodeproj \
+            -scheme GlassPulse \
+            -configuration Release \
+            -archivePath .build/GlassPulse.xcarchive \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            archive
+
+      - name: Package unsigned IPA
+        run: |
+          set -euo pipefail
+          app_path=".build/GlassPulse.xcarchive/Products/Applications/GlassPulse.app"
+          package_root=".build/unsigned-ipa"
+
+          if [[ ! -d "$app_path" ]]; then
+            echo "Archived app not found at $app_path"
+            exit 1
+          fi
+
+          mkdir -p "$package_root/Payload"
+          ditto "$app_path" "$package_root/Payload/GlassPulse.app"
+          (
+            cd "$package_root"
+            /usr/bin/zip -qry ../GlassPulse.ipa Payload
+          )
+          test -s .build/GlassPulse.ipa
+          shasum -a 256 .build/GlassPulse.ipa
+
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: GlassPulse-unsigned-IPA-Xcode27
+          path: .build/GlassPulse.ipa
+          if-no-files-found: error

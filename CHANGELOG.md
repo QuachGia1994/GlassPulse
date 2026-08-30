@@ -10,3 +10,4 @@ All notable changes to Glass Pulse are recorded here.
 - Persistent high score, daily streak, shard economy, and unlockable themes.
 - StoreKit 2 weekly and monthly Plus subscription shell with transaction updates, purchasing, restore, and local StoreKit configuration.
 - Unit, UI launch, and Xcode 27 CI coverage.
+- Unsigned device IPA packaging in CI with AltStore and SideStore installation guidance.
