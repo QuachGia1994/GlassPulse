@@ -1,5 +1,6 @@
 package com.quachgia.glasspulse
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import org.junit.Assert.assertEquals
@@ -32,7 +33,7 @@ class LocaleResourcesTest {
     }
 
     private fun stringKeys(file: Path): Set<String> {
-        val text = Files.readString(file)
+        val text = String(Files.readAllBytes(file), StandardCharsets.UTF_8)
         val namePattern = Regex("<string\\s+name=\"([^\"]+)\"")
         return namePattern.findAll(text).map { it.groupValues[1] }.toSet()
     }
