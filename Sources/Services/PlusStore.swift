@@ -63,14 +63,34 @@ final class PlusStore {
     nonisolated static let productIDs = Set(PlusPlan.allCases.map(\.productID))
 
     private(set) var products: [Product] = []
-    private(set) var isPlusUnlocked = false
+    private(set) var hasActivePlusSubscription = false
     private(set) var isBusy = false
     private(set) var notice: String?
     private(set) var errorMessage: String?
 
     @ObservationIgnored private var transactionTask: Task<Void, Never>?
 
+    var access: FeatureAccess {
+        FeatureAccess.current(
+            hasActivePlusSubscription: hasActivePlusSubscription
+        )
+    }
+
+    var isPlusUnlocked: Bool {
+        access.hasPlus
+    }
+
+    var isBetaFullAccess: Bool {
+        access.isBetaFullAccess
+    }
+
     func start() async {
+        guard !isBetaFullAccess else {
+            products = []
+            notice = "Beta Full Access đang bật."
+            errorMessage = nil
+            return
+        }
         startTransactionListener()
         guard products.isEmpty else {
             await refreshEntitlements()
@@ -181,7 +201,7 @@ final class PlusStore {
             unlocked = true
             break
         }
-        isPlusUnlocked = unlocked
+        hasActivePlusSubscription = unlocked
     }
 
     private func verified<T>(_ result: VerificationResult<T>) throws -> T {

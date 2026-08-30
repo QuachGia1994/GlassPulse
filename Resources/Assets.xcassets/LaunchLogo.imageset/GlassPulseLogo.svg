@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="ring" x1="80" y1="64" x2="432" y2="448" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#53E7FF"/>
+      <stop offset="0.5" stop-color="#B47CFF"/>
+      <stop offset="1" stop-color="#FF9A45"/>
+    </linearGradient>
+    <linearGradient id="pulse" x1="116" y1="256" x2="396" y2="256" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#53E7FF"/>
+      <stop offset="0.5" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#FF9A45"/>
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="184" fill="#07101F" fill-opacity="0.72"/>
+  <circle cx="256" cy="256" r="184" fill="none" stroke="url(#ring)" stroke-width="22"/>
+  <path d="M116 260H184L210 188L246 332L278 220L304 260H396" fill="none" stroke="url(#pulse)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="126" cy="386" r="30" fill="#FF9A45"/>
+  <circle cx="118" cy="378" r="9" fill="#FFFFFF" fill-opacity="0.78"/>
+</svg>

@@ -23,4 +23,36 @@ final class PlusStoreTests: XCTestCase {
     func testPrismThemeIsPlusExclusive() {
         XCTAssertEqual(PulseTheme.prismPlus.unlock, .plus)
     }
+
+    func testStandardBuildDoesNotEnableBetaAccess() {
+        let access = FeatureAccess.current(
+            hasActivePlusSubscription: false
+        )
+
+        XCTAssertFalse(access.isBetaFullAccess)
+        XCTAssertFalse(access.hasPlus)
+    }
+
+    func testBetaAccessUnlocksPlusWithoutSubscription() {
+        let access = FeatureAccess(
+            isBetaFullAccess: true,
+            hasActivePlusSubscription: false
+        )
+
+        XCTAssertTrue(access.hasPlus)
+    }
+
+    func testProductionAccessRequiresActiveSubscription() {
+        let freeAccess = FeatureAccess(
+            isBetaFullAccess: false,
+            hasActivePlusSubscription: false
+        )
+        let subscribedAccess = FeatureAccess(
+            isBetaFullAccess: false,
+            hasActivePlusSubscription: true
+        )
+
+        XCTAssertFalse(freeAccess.hasPlus)
+        XCTAssertTrue(subscribedAccess.hasPlus)
+    }
 }

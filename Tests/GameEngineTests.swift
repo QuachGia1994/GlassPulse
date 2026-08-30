@@ -63,6 +63,39 @@ final class GameEngineTests: XCTestCase {
         XCTAssertEqual(engine.ballAngle, 0.08, accuracy: 0.000_001)
     }
 
+    @MainActor
+    func testPauseStopsMotionAndResumeRestartsFromCurrentTime() {
+        let engine = GameEngine(seed: 5, scenario: safeScenario)
+        let start = Date(timeIntervalSinceReferenceDate: 500)
+
+        engine.handleTap(now: start)
+        engine.advance(to: start.addingTimeInterval(0.10))
+        let angleBeforePause = engine.ballAngle
+
+        engine.pause()
+        engine.advance(to: start.addingTimeInterval(10))
+        XCTAssertEqual(engine.state, .paused)
+        XCTAssertEqual(engine.ballAngle, angleBeforePause, accuracy: 0.000_001)
+
+        engine.resume(at: start.addingTimeInterval(10))
+        engine.advance(to: start.addingTimeInterval(10.10))
+        XCTAssertEqual(engine.state, .playing)
+        XCTAssertEqual(engine.ballAngle, angleBeforePause + 0.08, accuracy: 0.000_001)
+    }
+
+    @MainActor
+    func testGameTapDoesNotReverseDirectionWhilePaused() {
+        let engine = GameEngine(seed: 6, scenario: safeScenario)
+        let start = Date(timeIntervalSinceReferenceDate: 600)
+
+        engine.handleTap(now: start)
+        engine.pause()
+        engine.handleTap(now: start.addingTimeInterval(1))
+
+        XCTAssertEqual(engine.state, .paused)
+        XCTAssertEqual(engine.direction, 1)
+    }
+
     func testDifficultyChangesOnlyEveryThreePoints() {
         let economy = GameEconomy.standard
 

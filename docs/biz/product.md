@@ -15,6 +15,7 @@ The first release keeps one gameplay mechanic. High score, daily streak, collect
 - Free: full core game; rewarded and interstitial ads may be added only after the first playable build is measured.
 - Plus weekly/monthly: no ads, exclusive theme/pulse variants, and early access to future modes.
 - Production price remains an App Store Connect decision; prices in `Resources/StoreKit.storekit` are local test values.
+- Unsigned CI artifacts are Beta Full Access builds for device testing; they do not weaken or replace production StoreKit verification.
 - D1 and D7 retention are the gate before expanding modes, content, or ad pressure.
 
 No dark patterns: renewal is disclosed at purchase, restore remains visible, and cancellation stays in the standard App Store subscription controls.

@@ -18,6 +18,12 @@ open GlassPulse.xcodeproj
 
 Run the GlassPulse scheme on an iPhone simulator. The scheme attaches `Resources/StoreKit.storekit` for local weekly and monthly Plus testing.
 
+## Controls
+
+- Tap the board to start, then tap again to reverse direction.
+- Use the 44-point Pause/Resume control on the board; opening Theme/Plus or leaving the app automatically pauses an active run.
+- Resume starts from the current time without applying background elapsed time to the simulation.
+
 ## Tests
 
 ```bash
@@ -28,7 +34,7 @@ The repository CI selects an available iPhone simulator instead of depending on 
 
 ## Cài lên máy
 
-Mỗi run CI thành công tạo artifact `GlassPulse-unsigned-IPA-Xcode27` chứa `GlassPulse.ipa`. Đây là IPA **unsigned**, không thể cài trực tiếp từ Files: AltStore hoặc SideStore sẽ ký lại IPA bằng Apple Account trước khi cài.
+Mỗi run CI thành công tạo artifact `GlassPulse-unsigned-IPA-Xcode27` chứa `GlassPulse.ipa`. Artifact này bật **Beta Full Access** để mở toàn bộ theme/pulse khi test; build production vẫn kiểm tra StoreKit bình thường. Đây là IPA **unsigned**, không thể cài trực tiếp từ Files: AltStore hoặc SideStore sẽ ký lại IPA bằng Apple Account trước khi cài.
 
 ### AltStore trên Windows
 

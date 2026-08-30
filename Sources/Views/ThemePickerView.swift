@@ -13,6 +13,12 @@ struct ThemePickerView: View {
         NavigationStack {
             ScrollView {
                 LazyVStack(spacing: 12) {
+                    if plusStore.isBetaFullAccess {
+                        Label("Beta Full Access: mọi theme đã mở", systemImage: "checkmark.seal.fill")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.cyan)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                     ForEach(PulseTheme.allCases) { theme in
                         themeCard(theme)
                     }
@@ -44,7 +50,7 @@ struct ThemePickerView: View {
     }
 
     private func themeCard(_ theme: PulseTheme) -> some View {
-        let selected = profile.activeTheme(hasPlus: plusStore.isPlusUnlocked) == theme
+        let selected = profile.activeTheme(access: plusStore.access) == theme
         return HStack(spacing: 14) {
             themePreview(theme)
             VStack(alignment: .leading, spacing: 4) {
@@ -89,20 +95,20 @@ struct ThemePickerView: View {
 
     private func actionTitle(for theme: PulseTheme, selected: Bool) -> String {
         guard !selected else { return "Đang dùng" }
-        if profile.owns(theme) { return "Dùng" }
+        if profile.canUse(theme, access: plusStore.access) { return "Dùng" }
         switch theme.unlock {
         case .free: return "Dùng"
         case .shards(let price): return "Mở \(price)"
-        case .plus: return plusStore.isPlusUnlocked ? "Dùng" : "Xem Plus"
+        case .plus: return plusStore.access.hasPlus ? "Dùng" : "Xem Plus"
         }
     }
 
     private func select(_ theme: PulseTheme) {
-        if case .plus = theme.unlock, !plusStore.isPlusUnlocked {
+        if case .plus = theme.unlock, !plusStore.access.hasPlus {
             showPlus = true
             return
         }
-        switch profile.select(theme, hasPlus: plusStore.isPlusUnlocked) {
+        switch profile.select(theme, access: plusStore.access) {
         case .success:
             dismiss()
         case .failure(let error):

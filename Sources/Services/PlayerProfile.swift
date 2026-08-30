@@ -64,36 +64,40 @@ final class PlayerProfile {
         ownedThemeIDs = storedThemes.union([PulseTheme.clarity.id])
     }
 
-    func activeTheme(hasPlus: Bool) -> PulseTheme {
-        guard let selected = PulseTheme(rawValue: selectedThemeID) else { return .clarity }
-        switch selected.unlock {
-        case .free:
-            return selected
-        case .shards:
-            return ownedThemeIDs.contains(selected.id) ? selected : .clarity
-        case .plus:
-            return hasPlus ? selected : .clarity
+    func activeTheme(access: FeatureAccess) -> PulseTheme {
+        guard let selected = PulseTheme(rawValue: selectedThemeID) else {
+            return .clarity
         }
+        guard canUse(selected, access: access) else { return .clarity }
+        return selected
     }
 
-    func owns(_ theme: PulseTheme) -> Bool {
+    func canUse(_ theme: PulseTheme, access: FeatureAccess) -> Bool {
+        guard !access.isBetaFullAccess else { return true }
         switch theme.unlock {
         case .free:
             true
         case .shards:
             ownedThemeIDs.contains(theme.id)
         case .plus:
-            false
+            access.hasPlus
         }
     }
 
-    func select(_ theme: PulseTheme, hasPlus: Bool) -> Result<Void, PlayerProfileError> {
+    func select(
+        _ theme: PulseTheme,
+        access: FeatureAccess
+    ) -> Result<Void, PlayerProfileError> {
+        guard !access.isBetaFullAccess else {
+            selectedThemeID = theme.id
+            return .success(())
+        }
         switch theme.unlock {
         case .free:
             selectedThemeID = theme.id
             return .success(())
         case .plus:
-            guard hasPlus else { return .failure(.plusRequired) }
+            guard access.hasPlus else { return .failure(.plusRequired) }
             selectedThemeID = theme.id
             return .success(())
         case .shards(let price):

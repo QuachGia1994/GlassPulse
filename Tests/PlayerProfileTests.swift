@@ -29,13 +29,17 @@ final class PlayerProfileTests: XCTestCase {
         let profile = PlayerProfile(defaults: defaults)
 
         profile.recordRun(score: 20, reward: 20)
-        let result = profile.select(.ember, hasPlus: false)
+        let access = FeatureAccess(
+            isBetaFullAccess: false,
+            hasActivePlusSubscription: false
+        )
+        let result = profile.select(.ember, access: access)
 
         guard case .success = result else {
             return XCTFail("Expected Ember to unlock with 20 shards.")
         }
         XCTAssertEqual(profile.totalShards, 2)
-        XCTAssertEqual(profile.activeTheme(hasPlus: false), .ember)
+        XCTAssertEqual(profile.activeTheme(access: access), .ember)
         XCTAssertEqual(profile.bestScore, 20)
     }
 
@@ -46,11 +50,38 @@ final class PlayerProfileTests: XCTestCase {
         defer { defaults.removePersistentDomain(forName: suiteName) }
         let profile = PlayerProfile(defaults: defaults)
 
-        let result = profile.select(.prismPlus, hasPlus: false)
+        let access = FeatureAccess(
+            isBetaFullAccess: false,
+            hasActivePlusSubscription: false
+        )
+        let result = profile.select(.prismPlus, access: access)
 
         guard case .failure(.plusRequired) = result else {
             return XCTFail("Expected Prism Plus to require an entitlement.")
         }
-        XCTAssertEqual(profile.activeTheme(hasPlus: false), .clarity)
+        XCTAssertEqual(profile.activeTheme(access: access), .clarity)
+    }
+
+    @MainActor
+    func testBetaAccessSelectsShardAndPlusThemesWithoutSpending() throws {
+        let suiteName = "glassPulse.tests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let profile = PlayerProfile(defaults: defaults)
+        let access = FeatureAccess(
+            isBetaFullAccess: true,
+            hasActivePlusSubscription: false
+        )
+
+        guard case .success = profile.select(.aurora, access: access) else {
+            return XCTFail("Expected beta access to unlock Aurora.")
+        }
+        XCTAssertEqual(profile.totalShards, 0)
+        XCTAssertEqual(profile.activeTheme(access: access), .aurora)
+
+        guard case .success = profile.select(.prismPlus, access: access) else {
+            return XCTFail("Expected beta access to unlock Prism Plus.")
+        }
+        XCTAssertEqual(profile.activeTheme(access: access), .prismPlus)
     }
 }

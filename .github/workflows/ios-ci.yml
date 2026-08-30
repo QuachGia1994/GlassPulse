@@ -123,6 +123,7 @@ jobs:
             -configuration Release \
             -archivePath .build/GlassPulse.xcarchive \
             -destination 'generic/platform=iOS' \
+            'SWIFT_ACTIVE_COMPILATION_CONDITIONS=$(inherited) GLASS_PULSE_BETA' \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \

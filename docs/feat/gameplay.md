@@ -11,6 +11,8 @@ Product direction: [product.md](../biz/product.md).
 3. Obstacle arcs rotate around the same orbit at their own speeds; angular overlap ends the run.
 4. A gem spawns outside every obstacle margin; crossing it awards one point and immediately spawns the next gem.
 5. At every third point, the game adds an obstacle until three exist; later three-point milestones multiply all obstacle speeds by 1.04.
+6. Pause freezes simulation time and ignores board taps; Resume restarts the frame clock without applying elapsed background time.
+7. Opening Theme/Plus or moving the app out of the active scene pauses an active run.
 
 ## Fairness
 

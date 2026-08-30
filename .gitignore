@@ -2,5 +2,6 @@
 .build/
 DerivedData/
 GlassPulse.xcodeproj/
+Resources/Info.plist
 *.xcuserstate
 xcuserdata/

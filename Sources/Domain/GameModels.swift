@@ -3,6 +3,7 @@ import Foundation
 enum GameState: Equatable, Sendable {
     case start
     case playing
+    case paused
     case over
 }
 

@@ -12,9 +12,13 @@ struct PlusView: View {
                 VStack(spacing: 18) {
                     hero
                     benefits
-                    purchaseOptions
-                    restoreButton
-                    legalNote
+                    if store.isBetaFullAccess {
+                        betaAccessStatus
+                    } else {
+                        purchaseOptions
+                        restoreButton
+                        legalNote
+                    }
                 }
                 .padding()
             }
@@ -33,14 +37,26 @@ struct PlusView: View {
             Image(systemName: store.isPlusUnlocked ? "checkmark.seal.fill" : "sparkles")
                 .font(.system(size: 42))
                 .foregroundStyle(.cyan)
-            Text(store.isPlusUnlocked ? "Plus đang hoạt động" : "Mở nhịp chơi riêng")
+            Text(heroTitle)
                 .font(.title2.weight(.semibold))
-            Text("Tắt quảng cáo, mở theme Prism Plus và nhận mode mới sớm hơn.")
+            Text(heroSubtitle)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
         .padding(.vertical, 8)
+    }
+
+    private var heroTitle: String {
+        if store.isBetaFullAccess { return "Beta Full Access" }
+        return store.isPlusUnlocked ? "Plus đang hoạt động" : "Mở nhịp chơi riêng"
+    }
+
+    private var heroSubtitle: String {
+        if store.isBetaFullAccess {
+            return "Toàn bộ theme và pulse đã mở để kiểm thử bản unsigned."
+        }
+        return "Tắt quảng cáo, mở theme Prism Plus và nhận mode mới sớm hơn."
     }
 
     private var benefits: some View {
@@ -49,6 +65,18 @@ struct PlusView: View {
             benefit("Theme và pulse độc quyền", systemImage: "paintpalette.fill")
             benefit("Truy cập sớm mode mới", systemImage: "clock.badge.checkmark")
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private var betaAccessStatus: some View {
+        Label(
+            "Không cần mua hoặc khôi phục trong bản Beta này.",
+            systemImage: "checkmark.shield.fill"
+        )
+        .font(.subheadline.weight(.medium))
+        .foregroundStyle(.cyan)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))

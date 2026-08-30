@@ -38,6 +38,7 @@ final class GameEngine {
         switch state {
         case .start: "Chạm để bắt đầu"
         case .playing: ""
+        case .paused: "Đã tạm dừng"
         case .over: "Thua rồi. Chạm để chơi lại"
         }
     }
@@ -57,17 +58,28 @@ final class GameEngine {
         case .playing:
             direction *= -1
             sensory.reversed()
+        case .paused:
+            return
         case .over:
             reset()
             startPlaying(at: now)
         }
     }
 
-    func suspendFrameClock() {
+    func pause() {
+        guard state == .playing else { return }
+        state = .paused
         lastUpdate = nil
     }
 
+    func resume(at now: Date = .now) {
+        guard state == .paused else { return }
+        state = .playing
+        lastUpdate = now
+    }
+
     func advance(to now: Date) {
+        guard state != .paused else { return }
         expireEffects(at: now)
         guard state == .playing else { return }
         defer { lastUpdate = now }

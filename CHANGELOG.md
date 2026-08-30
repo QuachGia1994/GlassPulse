@@ -11,3 +11,6 @@ All notable changes to Glass Pulse are recorded here.
 - StoreKit 2 weekly and monthly Plus subscription shell with transaction updates, purchasing, restore, and local StoreKit configuration.
 - Unit, UI launch, and Xcode 27 CI coverage.
 - Unsigned device IPA packaging in CI with AltStore and SideStore installation guidance.
+- Beta Full Access for unsigned CI builds while production keeps verified StoreKit entitlements.
+- Pause/resume controls with automatic pausing when the app leaves the active scene.
+- Branded App Icon, native launch screen, and animated startup splash.
