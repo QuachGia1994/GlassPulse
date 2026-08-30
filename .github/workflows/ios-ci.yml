@@ -1,0 +1,99 @@
+name: iOS CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: glass-pulse-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Xcode 27 build and test
+    runs-on: xcode-27
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Require Swift 6.4 toolchain
+        run: |
+          xcode_version="$(xcodebuild -version | head -1)"
+          swift_version="$(swift --version | head -1)"
+          echo "$xcode_version"
+          echo "$swift_version"
+          [[ "$xcode_version" == Xcode\ 27* ]] || { echo "Expected Xcode 27."; exit 1; }
+          [[ "$swift_version" == *"Swift version 6.4"* ]] || { echo "Expected Swift 6.4."; exit 1; }
+
+      - name: Generate Xcode project
+        run: |
+          xcodegen generate
+          xcodebuild -list -project GlassPulse.xcodeproj
+
+      - name: Select available iPhone simulator
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import subprocess
+
+          devices = json.loads(
+              subprocess.check_output(
+                  ["xcrun", "simctl", "list", "devices", "available", "-j"],
+                  text=True,
+              )
+          )["devices"]
+
+          for runtime_devices in devices.values():
+              for device in runtime_devices:
+                  if device["name"].startswith("iPhone"):
+                      with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env_file:
+                          env_file.write(f"SIMULATOR_ID={device['udid']}\n")
+                      print(f"Using {device['name']} ({device['udid']})")
+                      raise SystemExit(0)
+
+          raise SystemExit("No available iPhone simulator found")
+          PY
+
+      - name: Build simulator app
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project GlassPulse.xcodeproj \
+            -scheme GlassPulse \
+            -configuration Debug \
+            -derivedDataPath .build \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Run tests
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project GlassPulse.xcodeproj \
+            -scheme GlassPulse \
+            -configuration Debug \
+            -derivedDataPath .build \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" \
+            CODE_SIGNING_ALLOWED=NO \
+            test
+
+      - name: Upload simulator app
+        uses: actions/upload-artifact@v4
+        with:
+          name: GlassPulse-iOS-Simulator-Xcode27
+          path: .build/Build/Products/Debug-iphonesimulator/GlassPulse.app
+          if-no-files-found: error

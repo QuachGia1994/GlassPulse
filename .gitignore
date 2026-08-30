@@ -1,0 +1,6 @@
+.DS_Store
+.build/
+DerivedData/
+GlassPulse.xcodeproj/
+*.xcuserstate
+xcuserdata/

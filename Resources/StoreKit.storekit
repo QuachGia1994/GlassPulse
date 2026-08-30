@@ -1,0 +1,89 @@
+{
+  "identifier" : "A54B3C2D-2157-49A2-9F89-A11C0DE00001",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_applicationInternalID" : "675100001",
+    "_developerTeamID" : "",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 0,
+    "_locale" : "vi_VN",
+    "_renewalBillingIssuesEnabled" : false,
+    "_storefront" : "VNM",
+    "_storeKitErrors" : [
+
+    ],
+    "_timeRate" : 0
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "5A15D10B-9197-4D8A-A026-77A5ECCE01A1",
+      "localizations" : [
+        {
+          "description" : "Tắt quảng cáo, mở theme riêng và vào sớm mode mới.",
+          "displayName" : "Glass Pulse Plus",
+          "locale" : "vi_VN"
+        }
+      ],
+      "name" : "Glass Pulse Plus",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "1.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "675100101",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Quyền lợi Plus gia hạn mỗi tuần.",
+              "displayName" : "Plus tuần",
+              "locale" : "vi_VN"
+            }
+          ],
+          "productID" : "com.quachgia.glasspulse.plus.weekly",
+          "recurringSubscriptionPeriod" : "P1W",
+          "referenceName" : "Glass Pulse Plus Weekly",
+          "subscriptionGroupID" : "5A15D10B-9197-4D8A-A026-77A5ECCE01A1"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "4.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "675100102",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Quyền lợi Plus gia hạn mỗi tháng.",
+              "displayName" : "Plus tháng",
+              "locale" : "vi_VN"
+            }
+          ],
+          "productID" : "com.quachgia.glasspulse.plus.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Glass Pulse Plus Monthly",
+          "subscriptionGroupID" : "5A15D10B-9197-4D8A-A026-77A5ECCE01A1"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}
