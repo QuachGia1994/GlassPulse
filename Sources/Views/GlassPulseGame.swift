@@ -6,6 +6,7 @@ struct GlassPulseGame: View {
     @Environment(PlayerProfile.self) private var profile
     @Environment(PlusStore.self) private var plusStore
     @Environment(SensoryEngine.self) private var sensory
+    @Environment(GameSettings.self) private var settings
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -14,6 +15,7 @@ struct GlassPulseGame: View {
     @State private var showModes = false
     @State private var showThemes = false
     @State private var showPlus = false
+    @State private var showSettings = false
     @State private var didRecordCurrentRun = false
     @State private var dailyBonusForCurrentRun = 0
 
@@ -75,6 +77,10 @@ struct GlassPulseGame: View {
         }
         .sheet(isPresented: $showPlus) {
             PlusView()
+                .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
                 .presentationDetents([.medium, .large])
         }
     }
@@ -159,7 +165,7 @@ struct GlassPulseGame: View {
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .stroke(.white.opacity(0.14), lineWidth: 1)
+                    .stroke(.white.opacity(settings.highContrastEnabled ? 0.30 : 0.14), lineWidth: 1)
             }
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             .allowsHitTesting(false)
@@ -188,7 +194,11 @@ struct GlassPulseGame: View {
                         in: &context,
                         size: size,
                         now: timeline.date,
-                        theme: activeTheme
+                        theme: activeTheme,
+                        presentation: RenderPresentation(
+                            reduceMotion: settings.reduceMotionEnabled,
+                            highContrast: settings.highContrastEnabled
+                        )
                     )
                 }
             }
@@ -343,37 +353,80 @@ struct GlassPulseGame: View {
     }
 
     private var footer: some View {
-        HStack(spacing: 8) {
-            Button {
-                showModes = true
-            } label: {
-                Label("Mode", systemImage: "square.grid.2x2.fill")
-                    .frame(maxWidth: .infinity)
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(spacing: 8) {
+                    HStack(spacing: 8) {
+                        modesButton
+                        themesButton
+                    }
+                    HStack(spacing: 8) {
+                        plusButton
+                        settingsGear
+                    }
+                }
+            } else {
+                HStack(spacing: 8) {
+                    modesButton
+                    themesButton
+                    plusButton
+                    settingsGear
+                }
             }
-            .disabled(!canChangeMode)
-            .accessibilityIdentifier("game.modes")
-
-            Button {
-                engine.pause()
-                showThemes = true
-            } label: {
-                Label("Theme", systemImage: "paintpalette.fill")
-                    .frame(maxWidth: .infinity)
-            }
-            .accessibilityIdentifier("game.themes")
-
-            Button {
-                engine.pause()
-                showPlus = true
-            } label: {
-                Label(plusButtonTitle, systemImage: "sparkles")
-                    .frame(maxWidth: .infinity)
-            }
-            .tint(activeTheme.palette.ring)
         }
         .font(.caption.weight(.medium))
         .buttonStyle(.bordered)
         .buttonBorderShape(.roundedRectangle(radius: 14))
+    }
+
+    private var modesButton: some View {
+        Button {
+            showModes = true
+        } label: {
+            Label("Mode", systemImage: "square.grid.2x2.fill")
+                .frame(maxWidth: .infinity)
+        }
+        .disabled(!canChangeMode)
+        .accessibilityIdentifier("game.modes")
+    }
+
+    private var themesButton: some View {
+        Button {
+            engine.pause()
+            showThemes = true
+        } label: {
+            Label("Theme", systemImage: "paintpalette.fill")
+                .frame(maxWidth: .infinity)
+        }
+        .accessibilityIdentifier("game.themes")
+    }
+
+    private var plusButton: some View {
+        Button {
+            engine.pause()
+            showPlus = true
+        } label: {
+            Label(plusButtonTitle, systemImage: "sparkles")
+                .frame(maxWidth: .infinity)
+        }
+        .tint(activeTheme.palette.ring)
+    }
+
+    private var settingsGear: some View {
+        Button {
+            engine.pause()
+            showSettings = true
+        } label: {
+            Image(systemName: "gearshape.fill")
+                .font(.headline)
+                .frame(width: 44, height: 44)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(activeTheme.palette.ring)
+        .background(.thinMaterial, in: Circle())
+        .overlay { Circle().stroke(borderColor, lineWidth: 1) }
+        .accessibilityLabel(Text("settings.open.label"))
+        .accessibilityIdentifier("settings.open")
     }
 
     private var canChangeMode: Bool {

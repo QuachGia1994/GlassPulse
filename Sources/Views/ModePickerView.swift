@@ -6,7 +6,6 @@ struct ModePickerView: View {
 
     @Environment(PlayerProfile.self) private var profile
     @Environment(PlusStore.self) private var plusStore
-    @Environment(SensoryEngine.self) private var sensory
     @Environment(\.dismiss) private var dismiss
 
     @State private var selectionError: PlayerProfileError?
@@ -17,7 +16,6 @@ struct ModePickerView: View {
     }
 
     var body: some View {
-        @Bindable var sensory = sensory
         NavigationStack {
             ScrollView {
                 LazyVStack(spacing: 12) {
@@ -30,7 +28,6 @@ struct ModePickerView: View {
                     ForEach(GameModeID.allCases) { modeID in
                         modeCard(modeID)
                     }
-                    sensoryControls(soundEnabled: $sensory.soundEnabled, hapticsEnabled: $sensory.hapticsEnabled)
                 }
                 .padding()
             }
@@ -104,19 +101,6 @@ struct ModePickerView: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("mode.\(modeID.rawValue)")
-    }
-
-    private func sensoryControls(
-        soundEnabled: Binding<Bool>,
-        hapticsEnabled: Binding<Bool>
-    ) -> some View {
-        VStack(spacing: 8) {
-            Toggle("Âm thanh", isOn: soundEnabled)
-            Toggle("Haptic", isOn: hapticsEnabled)
-        }
-        .font(.subheadline)
-        .padding(14)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
     private func select(_ modeID: GameModeID) {

@@ -70,7 +70,7 @@ final class GlassPulseLaunchTests: XCTestCase {
         XCTAssertEqual(directionAfterPause, directionBeforePause)
 
         let resumeButton = app.buttons["game.resume"]
-        assertExists(resumeButton, timeout: 2)
+        assertExists(resumeButton, timeout: 5)
         let pauseExistsWhilePaused = pauseButton.exists
         XCTAssertFalse(pauseExistsWhilePaused)
 

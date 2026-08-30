@@ -31,20 +31,46 @@ data class GameUiState(
     val activeThemeId: PulseThemeId,
     val betaFullAccess: Boolean,
     val dailyBonus: Int,
-    val frameTimeNanos: Long
+    val frameTimeNanos: Long,
+    val reduceMotion: Boolean,
+    val highContrast: Boolean
 )
 
 class GameController(
     context: Context,
-    private val betaFullAccess: Boolean
+    private val betaFullAccess: Boolean,
+    val settings: GameSettingsStore
 ) {
     private val profile = GameProfile(context)
     private var engine = GameEngine(sessionFor(profile.activeMode(betaFullAccess)))
     private var settledCurrentRun = false
     private var dailyBonus = 0
+    private val music = MusicController(context, settings)
+    private val sensoryDispatcher = SensoryDispatcher(
+        settings = settings,
+        haptics = AndroidHapticSink(context),
+        sfx = AndroidSfxSink()
+    )
+    private val sensoryDetector = SensoryEventDetector(sensoryDispatcher)
 
-    var uiState by mutableStateOf(buildUiState(System.nanoTime()))
+    var uiState by mutableStateOf(buildUiState(System.nanoTime(), engine.snapshot()))
         private set
+
+    fun onLaunchUiReady() {
+        music.startIfReady()
+    }
+
+    fun resumeForeground() {
+        music.resumeIfAppropriate()
+    }
+
+    fun applyMusicSettings() {
+        music.applySettings()
+    }
+
+    fun releaseSensory() {
+        music.release()
+    }
 
     fun advance(frameTimeNanos: Long) {
         val previousState = engine.state
@@ -103,12 +129,14 @@ class GameController(
 
     fun pauseForBackground() {
         if (engine.state == GameState.PLAYING) pause()
+        music.pauseForBackground()
     }
 
     private fun replaceEngine(session: GameSessionContext) {
         engine = GameEngine(session)
         settledCurrentRun = false
         dailyBonus = 0
+        sensoryDetector.reset(engine.snapshot())
     }
 
     private fun settleCurrentRun() {
@@ -130,18 +158,21 @@ class GameController(
     }
 
     private fun publish(frameTimeNanos: Long) {
-        uiState = buildUiState(frameTimeNanos)
+        val snapshot = engine.snapshot()
+        sensoryDetector.onSnapshot(snapshot)
+        uiState = buildUiState(frameTimeNanos, snapshot)
     }
 
-    private fun buildUiState(frameTimeNanos: Long): GameUiState {
-        val game = engine.snapshot()
+    private fun buildUiState(frameTimeNanos: Long, snapshot: GameSnapshot): GameUiState {
         return GameUiState(
-            game = game,
-            player = profile.snapshot(game.session.dailyKey),
+            game = snapshot,
+            player = profile.snapshot(snapshot.session.dailyKey),
             activeThemeId = profile.activeTheme(betaFullAccess),
             betaFullAccess = betaFullAccess,
             dailyBonus = dailyBonus,
-            frameTimeNanos = frameTimeNanos
+            frameTimeNanos = frameTimeNanos,
+            reduceMotion = settings.reduceMotionEnabled,
+            highContrast = settings.highContrastEnabled
         )
     }
 

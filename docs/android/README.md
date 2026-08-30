@@ -16,6 +16,16 @@ The Android mirror lives under `android/` and is native Kotlin + Jetpack Compose
 - Material 3 1.4.0
 - Activity Compose 1.12.4
 - Core SplashScreen 1.2.0
+- AppCompat 1.7.1 (per-app locales backport, API 26-32)
+
+## Settings, sensory and music
+
+- `GameSettingsStore` (SharedPreferences-backed, Compose-observable) is the single settings source of truth: Background Music, Sound Effects, Haptics, Reduce Motion, High Contrast and Language. Profile data stays in `GameProfile` storage and is untouched.
+- The Settings sheet mirrors the iOS hierarchy: Audio / Feedback / Display / Language / Music credit sections, TalkBack labels, hints and state descriptions, stable `settings.*` test tags, and a 48 dp trailing footer gear with a two-row fallback at large font scales.
+- `SensoryEventDetector` translates engine snapshot diffs into exactly-once events; `SensoryDispatcher` gates them per settings flag; `AndroidHapticSink` (VibratorManager/Vibrator with primitive, amplitude and basic fallbacks, 25 Hz proximity throttle, Battery Saver degradation) and `AndroidSfxSink` (cached static-mode AudioTrack tones at the iOS 310/760/118 Hz frequencies and envelopes) execute at the framework edge. `GameEngine` stays platform-free.
+- `MusicController` loops `res/raw/bgm.ogg` (one pinned CC0 master, see `Media/Music/PROVENANCE.json`) with `USAGE_GAME` audio focus, duck/transient-loss handling and deterministic release.
+- Language switching uses `AppCompatDelegate` per-app locales (API 26-32 backport) and the framework `localeConfig` on Android 13+, kept in two-way sync with the in-app picker. Supported: System, English, Tiếng Việt, 日本語, 简体中文 (zh-CN tag resolving `values-zh-rCN`).
+- Reduce Motion flattens the decorative ring breathing (gameplay timing unchanged); High Contrast raises ring/border contrast and adds a non-color ball outline.
 
 ## Playable parity scope
 

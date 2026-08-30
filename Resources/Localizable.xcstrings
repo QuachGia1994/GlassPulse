@@ -1,118 +1,1126 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "game.input.direction.clockwise" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Direction: clockwise" } },
-        "ja" : { "stringUnit" : { "state" : "translated", "value" : "方向：時計回り" } },
-        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Hướng: thuận chiều" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "方向：顺时针" } }
+  "sourceLanguage": "en",
+  "strings": {
+    "game.input.direction.clockwise": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Direction: clockwise"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "方向：時計回り"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hướng: thuận chiều"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "方向：顺时针"
+          }
+        }
       }
     },
-    "game.input.direction.counterclockwise" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Direction: counterclockwise" } },
-        "ja" : { "stringUnit" : { "state" : "translated", "value" : "方向：反時計回り" } },
-        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Hướng: ngược chiều" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "方向：逆时针" } }
+    "game.input.direction.counterclockwise": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Direction: counterclockwise"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "方向：反時計回り"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hướng: ngược chiều"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "方向：逆时针"
+          }
+        }
       }
     },
-    "game.input.hint.over" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Use Retry or Choose Mode. Background taps do nothing." } },
-        "ja" : { "stringUnit" : { "state" : "translated", "value" : "「もう一度」または「モードを選ぶ」を使用してください。背景タップは無効です。" } },
-        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Dùng Chơi lại hoặc Chọn mode. Chạm nền không có tác dụng." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请使用“再玩一次”或“选择模式”。点击背景不会触发操作。" } }
+    "game.input.hint.over": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use Retry or Choose Mode. Background taps do nothing."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「もう一度」または「モードを選ぶ」を使用してください。背景タップは無効です。"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dùng Chơi lại hoặc Chọn mode. Chạm nền không có tác dụng."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请使用“再玩一次”或“选择模式”。点击背景不会触发操作。"
+          }
+        }
       }
     },
-    "game.input.hint.paused" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Use the Resume button to continue. Background taps do nothing." } },
-        "ja" : { "stringUnit" : { "state" : "translated", "value" : "続けるには再開ボタンを使用してください。背景タップは無効です。" } },
-        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Dùng nút Tiếp tục để chơi. Chạm nền không có tác dụng." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "请使用继续按钮。点击背景不会触发操作。" } }
+    "game.input.hint.paused": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use the Resume button to continue. Background taps do nothing."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "続けるには再開ボタンを使用してください。背景タップは無効です。"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dùng nút Tiếp tục để chơi. Chạm nền không có tác dụng."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请使用继续按钮。点击背景不会触发操作。"
+          }
+        }
       }
     },
-    "game.input.hint.playing" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Double-tap to reverse direction once." } },
-        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ダブルタップで進行方向を1回反転します。" } },
-        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Chạm hai lần bằng VoiceOver để đảo chiều đúng một lần." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "双击一次以反转方向。" } }
+    "game.input.hint.playing": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double-tap to reverse direction once."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ダブルタップで進行方向を1回反転します。"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chạm hai lần bằng VoiceOver để đảo chiều đúng một lần."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "双击一次以反转方向。"
+          }
+        }
       }
     },
-    "game.input.hint.start" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Double-tap to start the selected run." } },
-        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ダブルタップで選択中のランを開始します。" } },
-        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Chạm hai lần bằng VoiceOver để bắt đầu lượt chơi đã chọn." } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "双击以开始所选对局。" } }
+    "game.input.hint.start": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double-tap to start the selected run."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ダブルタップで選択中のランを開始します。"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chạm hai lần bằng VoiceOver để bắt đầu lượt chơi đã chọn."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "双击以开始所选对局。"
+          }
+        }
       }
     },
-    "game.input.label" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Gameplay surface" } },
-        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ゲーム操作エリア" } },
-        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Vùng điều khiển trò chơi" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "游戏操作区域" } }
+    "game.input.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gameplay surface"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ゲーム操作エリア"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vùng điều khiển trò chơi"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "游戏操作区域"
+          }
+        }
       }
     },
-    "game.metric.shards" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Shards" } },
-        "ja" : { "stringUnit" : { "state" : "translated", "value" : "シャード" } },
-        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Shard" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "碎片" } }
+    "game.metric.shards": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shards"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "シャード"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shard"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "碎片"
+          }
+        }
       }
     },
-    "game.over.chooseMode" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose Mode" } },
-        "ja" : { "stringUnit" : { "state" : "translated", "value" : "モードを選ぶ" } },
-        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Chọn mode" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "选择模式" } }
+    "game.over.chooseMode": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose Mode"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "モードを選ぶ"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chọn mode"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择模式"
+          }
+        }
       }
     },
-    "game.over.dailyBonus.format" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Daily bonus: +%lld" } },
-        "ja" : { "stringUnit" : { "state" : "translated", "value" : "デイリーボーナス：+%lld" } },
-        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Thưởng Daily: +%lld" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "每日奖励：+%lld" } }
+    "game.over.dailyBonus.format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily bonus: +%lld"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "デイリーボーナス：+%lld"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thưởng Daily: +%lld"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每日奖励：+%lld"
+          }
+        }
       }
     },
-    "game.over.retry" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Retry" } },
-        "ja" : { "stringUnit" : { "state" : "translated", "value" : "もう一度" } },
-        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Chơi lại" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "再玩一次" } }
+    "game.over.retry": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "もう一度"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chơi lại"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再玩一次"
+          }
+        }
       }
     },
-    "game.over.reward.format" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Reward: +%lld shards" } },
-        "ja" : { "stringUnit" : { "state" : "translated", "value" : "報酬：+%lld シャード" } },
-        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Thưởng: +%lld shard" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "奖励：+%lld 碎片" } }
+    "game.over.reward.format": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reward: +%lld shards"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "報酬：+%lld シャード"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thưởng: +%lld shard"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "奖励：+%lld 碎片"
+          }
+        }
       }
     },
-    "game.status.over.collision" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Run over" } },
-        "ja" : { "stringUnit" : { "state" : "translated", "value" : "ゲームオーバー" } },
-        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Thua rồi" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "游戏结束" } }
+    "game.status.over.collision": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run over"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ゲームオーバー"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thua rồi"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "游戏结束"
+          }
+        }
       }
     },
-    "game.status.over.completed" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Completed" } },
-        "ja" : { "stringUnit" : { "state" : "translated", "value" : "クリア" } },
-        "vi" : { "stringUnit" : { "state" : "translated", "value" : "Hoàn thành" } },
-        "zh-Hans" : { "stringUnit" : { "state" : "translated", "value" : "已完成" } }
+    "game.status.over.completed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completed"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "クリア"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hoàn thành"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已完成"
+          }
+        }
+      }
+    },
+    "settings.close.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close Settings"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Đóng cài đặt"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定を閉じる"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭设置"
+          }
+        }
+      }
+    },
+    "settings.haptics.hint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Event and proximity vibration."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rung theo sự kiện và khoảng cách."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "イベントと接近の振動。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "事件与接近振动。"
+          }
+        }
+      }
+    },
+    "settings.haptics.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Haptics"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rung phản hồi"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ハプティクス"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "触觉反馈"
+          }
+        }
+      }
+    },
+    "settings.highContrast.hint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Raises text, ring and border contrast with non-color state cues."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tăng tương phản chữ, vòng, viền và thêm dấu hiệu trạng thái không dựa vào màu."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文字・リング・枠のコントラストを上げ、色によらない状態表示を追加します。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提高文字、圆环与边框对比度，并加入非颜色状态提示。"
+          }
+        }
+      }
+    },
+    "settings.highContrast.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "High Contrast"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tương phản cao"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ハイコントラスト"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "高对比度"
+          }
+        }
+      }
+    },
+    "settings.language.en": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "English"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "English"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "English"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "English"
+          }
+        }
+      }
+    },
+    "settings.language.hint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Applies immediately and persists across launches."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Áp dụng ngay và được lưu cho các lần mở sau."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すぐに適用され、起動後も保持されます。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "立即生效并在启动后保持。"
+          }
+        }
+      }
+    },
+    "settings.language.ja": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日本語"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日本語"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日本語"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日本語"
+          }
+        }
+      }
+    },
+    "settings.language.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ngôn ngữ"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "言語"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "语言"
+          }
+        }
+      }
+    },
+    "settings.language.system": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hệ thống"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "システムに従う"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跟随系统"
+          }
+        }
+      }
+    },
+    "settings.language.vi": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tiếng Việt"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tiếng Việt"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tiếng Việt"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tiếng Việt"
+          }
+        }
+      }
+    },
+    "settings.language.zhHans": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "简体中文"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "简体中文"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "简体中文"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "简体中文"
+          }
+        }
+      }
+    },
+    "settings.music.credit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music: “Formant 1” by Benjamin Marzinski (CC0)."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nhạc: “Formant 1” của Benjamin Marzinski (CC0)."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "音楽:「Formant 1」Benjamin Marzinski(CC0)。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "音乐：“Formant 1”，Benjamin Marzinski（CC0）。"
+          }
+        }
+      }
+    },
+    "settings.music.hint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loops the bundled ambient track."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Phát lặp bản nhạc nền đi kèm."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内蔵のアンビエントトラックをループ再生します。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "循环播放内置的环境音乐。"
+          }
+        }
+      }
+    },
+    "settings.music.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Background Music"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nhạc nền"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バックグラウンドミュージック"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "背景音乐"
+          }
+        }
+      }
+    },
+    "settings.open.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Settings"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mở cài đặt"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定を開く"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开设置"
+          }
+        }
+      }
+    },
+    "settings.reduceMotion.hint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disables splash pulsing and ring breathing. Gameplay timing is unchanged."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tắt nhấp nháy splash và nhịp thả vòng. Thời gian chơi không đổi."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "スプラッシュの脈動とリングの呼吸を無効化します。ゲームプレイのタイミングは変わりません。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭启动画面脉动与圆环呼吸。游戏计时不受影响。"
+          }
+        }
+      }
+    },
+    "settings.reduceMotion.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reduce Motion"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Giảm chuyển động"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "モーション削減"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "减弱动态效果"
+          }
+        }
+      }
+    },
+    "settings.section.audio": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Âm thanh"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オーディオ"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "音频"
+          }
+        }
+      }
+    },
+    "settings.section.credit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music credit"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ghi công nhạc"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "音楽クレジット"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "音乐署名"
+          }
+        }
+      }
+    },
+    "settings.section.display": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Display"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hiển thị"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表示"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示"
+          }
+        }
+      }
+    },
+    "settings.section.feedback": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Feedback"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Phản hồi"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フィードバック"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "反馈"
+          }
+        }
+      }
+    },
+    "settings.section.language": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ngôn ngữ"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "言語"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "语言"
+          }
+        }
+      }
+    },
+    "settings.sfx.hint": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reverse, collect and collision tones."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Âm đảo chiều, thu thập và va chạm."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "反転・収集・衝突の音。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "反向、收集与碰撞音。"
+          }
+        }
+      }
+    },
+    "settings.sfx.label": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sound Effects"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hiệu ứng âm thanh"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "効果音"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "音效"
+          }
+        }
+      }
+    },
+    "settings.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cài đặt"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置"
+          }
+        }
       }
     }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }

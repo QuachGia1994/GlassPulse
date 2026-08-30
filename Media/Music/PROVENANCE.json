@@ -1,0 +1,88 @@
+{
+  "track": {
+    "title": "Formant 1",
+    "author": "Benjamin Marzinski (benmarz)",
+    "master": {
+      "path": "Media/Music/Formant_1.wav",
+      "format": "WAV PCM signed 16-bit little-endian, 44100 Hz, stereo",
+      "durationSeconds": 18.701315,
+      "sizeBytes": 3303008,
+      "sha256": "3687e0550a8c29ff2b060f5a043f1ad1550582338fcae62fbf838ff5dddf8166"
+    },
+    "source": {
+      "repository": "https://github.com/benmarz/minimum_game",
+      "commitSha": "c13436130911640292f0fcb18ac52c17a8ea7bd7",
+      "path": "assets/Formant_1.wav",
+      "rawUrl": "https://raw.githubusercontent.com/benmarz/minimum_game/c13436130911640292f0fcb18ac52c17a8ea7bd7/assets/Formant_1.wav",
+      "license": {
+        "type": "CC0-1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0",
+        "evidence": "Repository README.md: 'All assets, except those noted below, are under the CC0-1.0 license'; the only excepted assets are mago3.ttf and coin-flip.wav. assets/Formant_1.wav is not an exception.",
+        "licenseFileUrl": "https://github.com/benmarz/minimum_game/blob/c13436130911640292f0fcb18ac52c17a8ea7bd7/README.md",
+        "attributionRequired": false
+      }
+    },
+    "encodes": [
+      {
+        "platform": "android",
+        "path": "android/app/src/main/res/raw/bgm.ogg",
+        "format": "OGG Vorbis q5, 44100 Hz, stereo",
+        "sizeBytes": 394866,
+        "sha256": "68be443a6c8a50c92dc76b2fb936d1f6409f5cf8d1faa630f305199329f617bb",
+        "command": "ffmpeg -i Media/Music/Formant_1.wav -c:a libvorbis -q:a 5 android/app/src/main/res/raw/bgm.ogg"
+      },
+      {
+        "platform": "ios",
+        "path": "Resources/Music/bgm.m4a",
+        "format": "AAC-LC 128 kbit/s in MP4/iPod muxer (writes iTunSMPB gapless metadata), 44100 Hz, stereo",
+        "sizeBytes": 317182,
+        "sha256": "a165cd339a1acd9470c410708aee8919d01454337e72e7de5bd9135107ee17b7",
+        "command": "ffmpeg -i Media/Music/Formant_1.wav -c:a aac -b:a 128k -f ipod Resources/Music/bgm.m4a"
+      }
+    ],
+    "toolchain": {
+      "ffmpeg": "8.1.2-full_build-www.gyan.dev (Windows x64)",
+      "ffprobe": "8.1.2-full_build-www.gyan.dev"
+    },
+    "audition": {
+      "method": "Objective signal analysis with ffprobe/ffmpeg 8.1.2 (duration, codec, silencedetect at -45 dB/0.15 s, sample-level loop-boundary RMS and discontinuity measurement on decoded PCM). Human listening confirmation on physical devices is deferred to the M4 device-validation gate; runtime_verified stays false until then.",
+      "candidates": [
+        {
+          "file": "Formant_1.wav (benmarz/minimum_game @ c1343613)",
+          "durationSeconds": 18.701315,
+          "format": "WAV PCM 44.1 kHz stereo",
+          "result": "SELECTED",
+          "evidence": "No silence at either boundary (silencedetect found none); head/tail RMS 0.398/0.332 (stereo L) so energy flows across the join; the loop join lands on the track's own opening transient (max sample-to-sample delta 0.34 within the first 5 ms exists in the source track itself), so looping reproduces the native downbeat rather than adding a click; documented game background loop shipped in the source Godot template; CC0-1.0."
+        },
+        {
+          "file": "Science Fiction.mp3 (effacestudios/Royalty-Free-Music-Pack @ 2ce8458)",
+          "durationSeconds": 90.8832,
+          "format": "MP3 44.1 kHz stereo",
+          "result": "REJECTED",
+          "evidence": "Tail RMS 0.011 vs head RMS 0.024: energy halves across the join, an audible dip every loop; MP3 encoder delay/padding adds sample-exact loop risk; generic production-music mood, weaker pulse/space fit."
+        },
+        {
+          "file": "Mysterious.mp3 (effacestudios/Royalty-Free-Music-Pack @ 2ce8458)",
+          "durationSeconds": 91.144425,
+          "format": "MP3 44.1 kHz stereo",
+          "result": "REJECTED",
+          "evidence": "Fade-out ending: tail RMS 0.0015 (effectively silent) vs head RMS 0.050; looping produces a dead gap every 91 s."
+        },
+        {
+          "file": "Planning.mp3 (effacestudios/Royalty-Free-Music-Pack @ 2ce8458)",
+          "durationSeconds": 91.144425,
+          "format": "MP3 44.1 kHz stereo",
+          "result": "REJECTED",
+          "evidence": "Silence gaps of 0.37 s, 0.27 s and 0.23 s inside the first second (silencedetect -45 dB/0.15 s); loop rhythm uneven at the join."
+        },
+        {
+          "file": "Deeper.flac (tannerhelland/free-music @ f6bfe16)",
+          "durationSeconds": 257.906939,
+          "format": "FLAC 44.1 kHz stereo",
+          "result": "REJECTED",
+          "evidence": "0.90 s leading silence and 0.19 s trailing silence: not seamless; 258 s would need ~47 kbit/s to fit the 1.5 MiB budget (unacceptable quality); CC BY 4.0 attribution burden; the same repository also hosts franchise remixes (Castlevania, Final Fantasy 7 arrangements), raising provenance-care requirements for no gain over the CC0 candidate."
+        }
+      ]
+    }
+  }
+}

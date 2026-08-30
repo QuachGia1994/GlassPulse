@@ -1,11 +1,17 @@
 import SwiftUI
 
+struct RenderPresentation: Sendable {
+    var reduceMotion = false
+    var highContrast = false
+}
+
 extension GameEngine {
     func draw(
         in context: inout GraphicsContext,
         size: CGSize,
         now: Date,
-        theme: PulseTheme
+        theme: PulseTheme,
+        presentation: RenderPresentation = RenderPresentation()
     ) {
         RenderDiagnostics.measureSimulation {
             advance(to: now)
@@ -13,25 +19,26 @@ extension GameEngine {
         guard size.width > 0, size.height > 0 else { return }
 
         RenderDiagnostics.measureCanvasFrame {
-            let geometry = renderGeometry(size: size, now: now, theme: theme)
-            drawAmbientRings(in: &context, geometry: geometry, theme: theme)
+            let geometry = renderGeometry(size: size, now: now, theme: theme, presentation: presentation)
+            drawAmbientRings(in: &context, geometry: geometry, theme: theme, presentation: presentation)
             for obstacle in obstacles {
                 drawObstacle(obstacle, in: &context, geometry: geometry, theme: theme)
             }
-            drawGem(in: &context, geometry: geometry, theme: theme)
+            drawGem(in: &context, geometry: geometry, theme: theme, presentation: presentation)
             drawEffects(in: &context, geometry: geometry, theme: theme, now: now)
-            drawBall(in: &context, geometry: geometry, theme: theme, now: now)
+            drawBall(in: &context, geometry: geometry, theme: theme, now: now, presentation: presentation)
         }
     }
 
     private func renderGeometry(
         size: CGSize,
         now: Date,
-        theme: PulseTheme
+        theme: PulseTheme,
+        presentation: RenderPresentation
     ) -> RenderGeometry {
         let center = CGPoint(x: size.width / 2, y: size.height / 2)
         let phase = now.timeIntervalSinceReferenceDate * theme.pulseFrequency
-        let pulse = CGFloat(sin(phase)) * theme.pulseAmplitude
+        let pulse = presentation.reduceMotion ? 0 : CGFloat(sin(phase)) * theme.pulseAmplitude
         let radius = max(36, min(size.width, size.height) / 2 - 30 + pulse)
         return RenderGeometry(center: center, orbitRadius: radius, ballRadius: 9)
     }
@@ -39,15 +46,19 @@ extension GameEngine {
     private func drawAmbientRings(
         in context: inout GraphicsContext,
         geometry: RenderGeometry,
-        theme: PulseTheme
+        theme: PulseTheme,
+        presentation: RenderPresentation
     ) {
         let outer = ellipse(center: geometry.center, radius: geometry.orbitRadius)
         let inner = ellipse(center: geometry.center, radius: geometry.orbitRadius - 5)
+        let ringOpacity: Double = presentation.highContrast ? 1.0 : 0.82
+        let shadowRadius: CGFloat = presentation.highContrast ? 14 : 9
         context.drawLayer { layer in
-            layer.addFilter(.shadow(color: theme.palette.ring.opacity(0.45), radius: 9))
-            layer.stroke(outer, with: .color(theme.palette.ring.opacity(0.82)), lineWidth: 1.8)
+            layer.addFilter(.shadow(color: theme.palette.ring.opacity(0.45), radius: shadowRadius))
+            layer.stroke(outer, with: .color(theme.palette.ring.opacity(ringOpacity)), lineWidth: 1.8)
         }
-        context.stroke(inner, with: .color(.white.opacity(0.08)), lineWidth: 0.8)
+        let innerOpacity: Double = presentation.highContrast ? 0.22 : 0.08
+        context.stroke(inner, with: .color(.white.opacity(innerOpacity)), lineWidth: 0.8)
     }
 
     private func drawObstacle(
@@ -113,23 +124,25 @@ extension GameEngine {
     private func drawGem(
         in context: inout GraphicsContext,
         geometry: RenderGeometry,
-        theme: PulseTheme
+        theme: PulseTheme,
+        presentation: RenderPresentation
     ) {
         let center = point(on: geometry.center, radius: geometry.orbitRadius, angle: gem.angle)
         let isPrecision = effectiveModeID == .precisionPulse
         let active = !isPrecision || pulseIsActive
+        let inactiveOpacity: Double = presentation.highContrast ? 0.62 : 0.42
         let radius: CGFloat = active ? 8.5 : 6
         let gemPath = diamond(center: center, radius: radius)
         context.drawLayer { layer in
             layer.addFilter(.shadow(color: theme.palette.gem.opacity(active ? 0.78 : 0.28), radius: active ? 12 : 4))
-            layer.fill(gemPath, with: .color(theme.palette.gem.opacity(active ? 1 : 0.42)))
+            layer.fill(gemPath, with: .color(theme.palette.gem.opacity(active ? 1 : inactiveOpacity)))
         }
         if isPrecision {
             let haloRadius: CGFloat = active ? 15 : 10
             context.stroke(
                 ellipse(center: center, radius: haloRadius),
-                with: .color(theme.palette.gem.opacity(active ? 0.9 : 0.24)),
-                style: StrokeStyle(lineWidth: active ? 2.4 : 1.2, dash: active ? [] : [3, 3])
+                with: .color(theme.palette.gem.opacity(active ? 0.9 : (presentation.highContrast ? 0.5 : 0.24))),
+                style: StrokeStyle(lineWidth: active ? 2.4 : (presentation.highContrast ? 1.8 : 1.2), dash: active ? [] : [3, 3])
             )
         }
         context.fill(
@@ -142,7 +155,8 @@ extension GameEngine {
         in context: inout GraphicsContext,
         geometry: RenderGeometry,
         theme: PulseTheme,
-        now: Date
+        now: Date,
+        presentation: RenderPresentation
     ) {
         let center = point(on: geometry.center, radius: geometry.orbitRadius, angle: ballAngle)
         let collisionProgress = effectProgress(
@@ -155,6 +169,13 @@ extension GameEngine {
         context.drawLayer { layer in
             layer.addFilter(.shadow(color: theme.palette.ball.opacity(0.78), radius: 12))
             layer.fill(ball, with: .color(theme.palette.ball.opacity(0.92)))
+        }
+        if presentation.highContrast {
+            context.stroke(
+                ball,
+                with: .color(.white.opacity(0.9)),
+                lineWidth: 1.6
+            )
         }
         let highlightCenter = CGPoint(x: center.x - radius * 0.28, y: center.y - radius * 0.32)
         context.fill(ellipse(center: highlightCenter, radius: radius * 0.30), with: .color(.white.opacity(0.76)))

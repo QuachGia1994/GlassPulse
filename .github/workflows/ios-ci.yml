@@ -140,11 +140,21 @@ jobs:
 
           test -f "$assets_path" || { echo "Assets.car is missing from the archive."; exit 1; }
           test -d "$app_path/PlugIns/GlassPulseWidgetExtension.appex" || { echo "Live Activity extension is missing from the archive."; exit 1; }
+          test -f "$app_path/bgm.m4a" || { echo "Bundled background music is missing from the archive."; exit 1; }
           plutil -p "$info_path" | tee .build/archive-info.txt
           grep -q 'CFBundleIcons' .build/archive-info.txt || { echo "CFBundleIcons is missing."; exit 1; }
           grep -q 'AppIcon' .build/archive-info.txt || { echo "AppIcon is missing from Info.plist icon metadata."; exit 1; }
           xcrun assetutil --info "$assets_path" | tee .build/archive-assets.json
           grep -q 'AppIcon' .build/archive-assets.json || { echo "AppIcon is missing from compiled Assets.car."; exit 1; }
+
+      - name: Verify music provenance checksum
+        run: |
+          set -euo pipefail
+          expected="$(python3 -c "import json;print(json.load(open('Media/Music/PROVENANCE.json'))['track']['encodes'][1]['sha256'])")"
+          actual="$(shasum -a 256 .build/GlassPulse.xcarchive/Products/Applications/GlassPulse.app/bgm.m4a | cut -d' ' -f1)"
+          echo "expected=$expected"
+          echo "actual=$actual"
+          [[ "$expected" == "$actual" ]] || { echo "Packaged bgm.m4a does not match the provenance manifest."; exit 1; }
 
       - name: Package unsigned IPA
         run: |

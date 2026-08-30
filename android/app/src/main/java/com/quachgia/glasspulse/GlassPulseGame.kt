@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -36,6 +37,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -84,8 +86,10 @@ fun GlassPulseGame(controller: GameController) {
     var showModes by remember { mutableStateOf(false) }
     var showThemes by remember { mutableStateOf(false) }
     var showAccess by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
 
     LaunchedEffect(controller) {
+        controller.onLaunchUiReady()
         while (true) {
             withFrameNanos { frameTimeNanos -> controller.advance(frameTimeNanos) }
         }
@@ -122,6 +126,10 @@ fun GlassPulseGame(controller: GameController) {
                 onShowAccess = {
                     controller.pause()
                     showAccess = true
+                },
+                onShowSettings = {
+                    controller.pause()
+                    showSettings = true
                 }
             )
         }
@@ -139,6 +147,12 @@ fun GlassPulseGame(controller: GameController) {
             uiState = uiState,
             controller = controller,
             onDismiss = { showThemes = false }
+        )
+    }
+    if (showSettings) {
+        SettingsSheet(
+            controller = controller,
+            onDismiss = { showSettings = false }
         )
     }
     if (showAccess) {
@@ -185,7 +199,8 @@ private fun GameChrome(
     palette: PulsePalette,
     onShowModes: () -> Unit,
     onShowThemes: () -> Unit,
-    onShowAccess: () -> Unit
+    onShowAccess: () -> Unit,
+    onShowSettings: () -> Unit
 ) {
     BoxWithConstraints(
         modifier = Modifier
@@ -225,7 +240,8 @@ private fun GameChrome(
                 palette = palette,
                 onShowModes = onShowModes,
                 onShowThemes = onShowThemes,
-                onShowAccess = onShowAccess
+                onShowAccess = onShowAccess,
+                onShowSettings = onShowSettings
             )
         }
     }
@@ -381,7 +397,9 @@ private fun GameCanvas(
         drawGlassPulse(
             game = uiState.game,
             palette = palette,
-            frameTimeNanos = uiState.frameTimeNanos
+            frameTimeNanos = uiState.frameTimeNanos,
+            reduceMotion = uiState.reduceMotion,
+            highContrast = uiState.highContrast
         )
     }
 }
@@ -674,22 +692,19 @@ private fun GameFooter(
     palette: PulsePalette,
     onShowModes: () -> Unit,
     onShowThemes: () -> Unit,
-    onShowAccess: () -> Unit
+    onShowAccess: () -> Unit,
+    onShowSettings: () -> Unit
 ) {
+    val fontScale = LocalDensity.current.fontScale
     val shape = RoundedCornerShape(14.dp)
-    val border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f))
+    val border = BorderStroke(1.dp, footerBorderColor(uiState))
     val colors = ButtonDefaults.outlinedButtonColors(
         containerColor = palette.glassSurface.copy(alpha = 0.88f),
         contentColor = MaterialTheme.colorScheme.onSurface,
         disabledContainerColor = palette.glassSurface.copy(alpha = 0.42f),
         disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.30f)
     )
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
+    val modesButton: @Composable RowScope.() -> Unit = {
         OutlinedButton(
             onClick = onShowModes,
             enabled = controller.canChangeMode(),
@@ -704,6 +719,8 @@ private fun GameFooter(
         ) {
             Text(stringResource(R.string.footer_mode), maxLines = 1)
         }
+    }
+    val themesButton: @Composable RowScope.() -> Unit = {
         OutlinedButton(
             onClick = onShowThemes,
             modifier = Modifier
@@ -715,8 +732,14 @@ private fun GameFooter(
             colors = colors,
             contentPadding = PaddingValues(horizontal = 8.dp)
         ) {
-            Text(stringResource(R.string.footer_theme), color = palette.ring, maxLines = 1)
+            Text(
+                stringResource(R.string.footer_theme),
+                color = palette.ring,
+                maxLines = 1
+            )
         }
+    }
+    val accessButton: @Composable RowScope.() -> Unit = {
         OutlinedButton(
             onClick = onShowAccess,
             modifier = Modifier
@@ -737,7 +760,82 @@ private fun GameFooter(
             )
         }
     }
+
+    if (fontScale > 1.5f) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                modesButton()
+                themesButton()
+            }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                accessButton()
+                SettingsGear(palette, uiState, onShowSettings, Modifier.weight(1f))
+            }
+        }
+    } else {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            modesButton()
+            themesButton()
+            accessButton()
+            SettingsGear(palette, uiState, onShowSettings)
+        }
+    }
 }
+
+@Composable
+private fun SettingsGear(
+    palette: PulsePalette,
+    uiState: GameUiState,
+    onShowSettings: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val gearDescription = stringResource(R.string.settings_open_label)
+    Surface(
+        onClick = onShowSettings,
+        modifier = modifier
+            .size(48.dp)
+            .testTag("settings.open"),
+        shape = CircleShape,
+        color = palette.glassSurface.copy(alpha = 0.92f),
+        contentColor = palette.ring,
+        border = BorderStroke(1.dp, footerBorderColor(uiState)),
+        shadowElevation = 6.dp
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .semantics {
+                    contentDescription = gearDescription
+                    role = Role.Button
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                stringResource(R.string.settings_gear_symbol),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun footerBorderColor(uiState: GameUiState): Color =
+    Color.White.copy(alpha = if (uiState.highContrast) 0.30f else 0.12f)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -1095,14 +1193,265 @@ private fun AccessDialog(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsSheet(
+    controller: GameController,
+    onDismiss: () -> Unit
+) {
+    val settings = controller.settings
+    val palette = controller.uiState.activeThemeId.palette()
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = palette.backgroundBottom.copy(alpha = 0.98f),
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        tonalElevation = 0.dp,
+        scrimColor = Color.Black.copy(alpha = 0.62f)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxHeight(0.92f)
+                .padding(horizontal = 18.dp)
+                .padding(bottom = 20.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.settings_title),
+                    modifier = Modifier
+                        .weight(1f)
+                        .semantics { heading() },
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.testTag("settings.close")
+                ) {
+                    Text(
+                        text = stringResource(R.string.action_close),
+                        color = palette.ring,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .testTag("settings.sheet")
+                    .padding(top = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                SettingsSection(R.string.settings_section_audio, palette) {
+                    SettingsToggle(
+                        tag = "settings.music",
+                        label = stringResource(R.string.settings_music_label),
+                        hint = stringResource(R.string.settings_music_hint),
+                        checked = settings.musicEnabled,
+                        onChecked = settings::setMusicEnabled
+                    )
+                    SettingsToggle(
+                        tag = "settings.sfx",
+                        label = stringResource(R.string.settings_sfx_label),
+                        hint = stringResource(R.string.settings_sfx_hint),
+                        checked = settings.soundEnabled,
+                        onChecked = settings::setSoundEnabled
+                    )
+                }
+                SettingsSection(R.string.settings_section_feedback, palette) {
+                    SettingsToggle(
+                        tag = "settings.haptics",
+                        label = stringResource(R.string.settings_haptics_label),
+                        hint = stringResource(R.string.settings_haptics_hint),
+                        checked = settings.hapticsEnabled,
+                        onChecked = settings::setHapticsEnabled
+                    )
+                }
+                SettingsSection(R.string.settings_section_display, palette) {
+                    SettingsToggle(
+                        tag = "settings.reduceMotion",
+                        label = stringResource(R.string.settings_reduce_motion_label),
+                        hint = stringResource(R.string.settings_reduce_motion_hint),
+                        checked = settings.reduceMotionEnabled,
+                        onChecked = settings::setReduceMotionEnabled
+                    )
+                    SettingsToggle(
+                        tag = "settings.highContrast",
+                        label = stringResource(R.string.settings_high_contrast_label),
+                        hint = stringResource(R.string.settings_high_contrast_hint),
+                        checked = settings.highContrastEnabled,
+                        onChecked = settings::setHighContrastEnabled
+                    )
+                }
+                SettingsSection(R.string.settings_section_language, palette) {
+                    AppLanguage.entries.forEach { language ->
+                        LanguageOption(
+                            tag = "settings.language." + (language.tag ?: "system"),
+                            label = languageOptionLabel(language),
+                            selected = settings.language == language,
+                            palette = palette,
+                            onSelect = {
+                                settings.setLanguage(language)
+                                controller.applyMusicSettings()
+                            }
+                        )
+                    }
+                }
+                SettingsSection(R.string.settings_section_credit, palette) {
+                    Text(
+                        text = stringResource(R.string.settings_music_credit),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.66f),
+                        fontSize = 13.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun languageOptionLabel(language: AppLanguage): String = when (language) {
+    AppLanguage.SYSTEM -> stringResource(R.string.settings_language_system)
+    AppLanguage.ENGLISH -> stringResource(R.string.settings_language_en)
+    AppLanguage.VIETNAMESE -> stringResource(R.string.settings_language_vi)
+    AppLanguage.JAPANESE -> stringResource(R.string.settings_language_ja)
+    AppLanguage.SIMPLIFIED_CHINESE -> stringResource(R.string.settings_language_zh)
+}
+
+@Composable
+private fun SettingsSection(
+    @StringRes title: Int,
+    palette: PulsePalette,
+    content: @Composable () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = stringResource(title),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.56f),
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.5.sp
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 6.dp)
+                .clip(RoundedCornerShape(18.dp))
+                .background(palette.glassSurface.copy(alpha = 0.76f))
+                .border(
+                    width = 1.dp,
+                    color = Color.White.copy(alpha = 0.10f),
+                    shape = RoundedCornerShape(18.dp)
+                )
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            content()
+        }
+    }
+}
+
+@Composable
+private fun SettingsToggle(
+    tag: String,
+    label: String,
+    hint: String,
+    checked: Boolean,
+    onChecked: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = label, fontWeight = FontWeight.Medium, fontSize = 15.sp)
+            Text(
+                text = hint,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f),
+                fontSize = 12.sp
+            )
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onChecked,
+            modifier = Modifier
+                .testTag(tag)
+                .semantics {
+                    contentDescription = label
+                    stateDescription = hint
+                }
+        )
+    }
+}
+
+@Composable
+private fun LanguageOption(
+    tag: String,
+    label: String,
+    selected: Boolean,
+    palette: PulsePalette,
+    onSelect: () -> Unit
+) {
+    val shape = RoundedCornerShape(12.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(
+                if (selected) {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.11f)
+                } else {
+                    Color.Transparent
+                }
+            )
+            .border(
+                width = if (selected) 1.5.dp else 0.dp,
+                color = if (selected) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    Color.Transparent
+                },
+                shape = shape
+            )
+            .clickable(onClick = onSelect)
+            .testTag(tag)
+            .padding(horizontal = 10.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.weight(1f),
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            fontSize = 15.sp
+        )
+        Text(
+            text = stringResource(if (selected) R.string.state_selected else R.string.state_use),
+            color = if (selected) palette.ring else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
 private fun DrawScope.drawGlassPulse(
     game: GameSnapshot,
     palette: PulsePalette,
-    frameTimeNanos: Long
+    frameTimeNanos: Long,
+    reduceMotion: Boolean,
+    highContrast: Boolean
 ) {
     val center = Offset(size.width / 2, size.height / 2)
     val phase = frameTimeNanos / 1_000_000_000.0 * palette.pulseFrequency
-    val pulse = sin(phase).toFloat() * palette.pulseAmplitudeDp.dp.toPx()
+    val pulse = if (reduceMotion) {
+        0f
+    } else {
+        sin(phase).toFloat() * palette.pulseAmplitudeDp.dp.toPx()
+    }
     val orbitRadius = max(36.dp.toPx(), size.minDimension / 2 - 30.dp.toPx() + pulse)
 
     drawCircle(
@@ -1112,13 +1461,13 @@ private fun DrawScope.drawGlassPulse(
         style = Stroke(width = 8.dp.toPx())
     )
     drawCircle(
-        color = palette.ring.copy(alpha = 0.86f),
+        color = palette.ring.copy(alpha = if (highContrast) 1f else 0.86f),
         radius = orbitRadius,
         center = center,
         style = Stroke(width = 1.8.dp.toPx())
     )
     drawCircle(
-        color = Color.White.copy(alpha = 0.08f),
+        color = Color.White.copy(alpha = if (highContrast) 0.22f else 0.08f),
         radius = orbitRadius - 5.dp.toPx(),
         center = center,
         style = Stroke(width = 0.8.dp.toPx())
@@ -1126,9 +1475,9 @@ private fun DrawScope.drawGlassPulse(
     game.obstacles.forEach { obstacle ->
         drawObstacle(obstacle, center, orbitRadius, palette)
     }
-    drawGem(game, center, orbitRadius, palette)
+    drawGem(game, center, orbitRadius, palette, highContrast)
     drawEffects(game, center, orbitRadius, palette, frameTimeNanos)
-    drawBall(game, center, orbitRadius, palette, frameTimeNanos)
+    drawBall(game, center, orbitRadius, palette, frameTimeNanos, highContrast)
 }
 
 private fun DrawScope.drawObstacle(
@@ -1190,12 +1539,14 @@ private fun DrawScope.drawGem(
     game: GameSnapshot,
     center: Offset,
     radius: Float,
-    palette: PulsePalette
+    palette: PulsePalette,
+    highContrast: Boolean
 ) {
     val gemCenter = orbitPoint(center, radius, game.gem.angle)
     val precision = game.session.effectiveModeId == GameModeId.PRECISION_PULSE
     val active = !precision || game.pulseIsActive
     val gemRadius = (if (active) 8.5.dp else 6.dp).toPx()
+    val inactiveAlpha = if (highContrast) 0.62f else 0.42f
 
     drawCircle(
         color = palette.gem.copy(alpha = if (active) 0.20f else 0.08f),
@@ -1204,15 +1555,17 @@ private fun DrawScope.drawGem(
     )
     drawPath(
         path = diamondPath(gemCenter, gemRadius),
-        color = palette.gem.copy(alpha = if (active) 1f else 0.42f)
+        color = palette.gem.copy(alpha = if (active) 1f else inactiveAlpha)
     )
     if (precision) {
         drawCircle(
-            color = palette.gem.copy(alpha = if (active) 0.9f else 0.24f),
+            color = palette.gem.copy(
+                alpha = if (active) 0.9f else if (highContrast) 0.5f else 0.24f
+            ),
             radius = (if (active) 15.dp else 10.dp).toPx(),
             center = gemCenter,
             style = Stroke(
-                width = if (active) 2.4.dp.toPx() else 1.2.dp.toPx(),
+                width = if (active) 2.4.dp.toPx() else (if (highContrast) 1.8.dp else 1.2.dp).toPx(),
                 pathEffect = if (active) null else {
                     PathEffect.dashPathEffect(floatArrayOf(5.dp.toPx(), 4.dp.toPx()))
                 }
@@ -1260,7 +1613,8 @@ private fun DrawScope.drawBall(
     center: Offset,
     radius: Float,
     palette: PulsePalette,
-    nowNanos: Long
+    nowNanos: Long,
+    highContrast: Boolean
 ) {
     val ballCenter = orbitPoint(center, radius, game.ballAngle)
     val collisionProgress = game.collisionEffect?.let {
@@ -1278,6 +1632,14 @@ private fun DrawScope.drawBall(
         radius = ballRadius,
         center = ballCenter
     )
+    if (highContrast) {
+        drawCircle(
+            color = Color.White.copy(alpha = 0.9f),
+            radius = ballRadius,
+            center = ballCenter,
+            style = Stroke(width = 1.6.dp.toPx())
+        )
+    }
     drawCircle(
         color = Color.White.copy(alpha = 0.76f),
         radius = ballRadius * 0.30f,

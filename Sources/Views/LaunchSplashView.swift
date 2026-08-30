@@ -3,9 +3,14 @@ import SwiftUI
 @MainActor
 struct LaunchSplashView: View {
     let isBetaFullAccess: Bool
+    var reduceMotionOverride: Bool = false
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
     @State private var isPulsing = false
+
+    private var reduceMotionActive: Bool {
+        reduceMotionOverride || systemReduceMotion
+    }
 
     var body: some View {
         ZStack {
@@ -33,7 +38,7 @@ struct LaunchSplashView: View {
     private var content: some View {
         VStack(spacing: 22) {
             GlassPulseLogo(size: 132)
-                .scaleEffect(reduceMotion ? 1 : (isPulsing ? 1.04 : 0.96))
+                .scaleEffect(reduceMotionActive ? 1 : (isPulsing ? 1.04 : 0.96))
             VStack(spacing: 8) {
                 Text("GLASS PULSE")
                     .font(.title2.weight(.semibold))
@@ -49,7 +54,7 @@ struct LaunchSplashView: View {
     }
 
     private func startPulsing() {
-        guard !reduceMotion else { return }
+        guard !reduceMotionActive else { return }
         withAnimation(
             .easeInOut(duration: 0.72)
                 .repeatForever(autoreverses: true)

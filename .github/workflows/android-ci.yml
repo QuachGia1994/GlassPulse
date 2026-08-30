@@ -53,6 +53,55 @@ jobs:
             testBetaDebugUnitTest \
             assembleBetaDebugAndroidTest
 
+      - name: Verify music provenance and icon resources
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          root = Path('.')
+          provenance = json.loads((root / 'Media/Music/PROVENANCE.json').read_text(encoding='utf-8'))
+          track = provenance['track']
+
+          def sha256(path: Path) -> str:
+              return hashlib.sha256(path.read_bytes()).hexdigest()
+
+          master = root / track['master']['path']
+          assert master.exists(), 'music master is missing'
+          assert sha256(master) == track['master']['sha256'], 'master checksum mismatch'
+
+          encodes = {entry['platform']: entry for entry in track['encodes']}
+          assert set(encodes) == {'android', 'ios'}, 'both platform encodes must be recorded'
+          for platform, entry in encodes.items():
+              encode_path = root / entry['path']
+              assert encode_path.exists(), f'{platform} encode is missing'
+              assert sha256(encode_path) == entry['sha256'], f'{platform} encode checksum mismatch'
+              assert encode_path.stat().st_size < 1.5 * 1024 * 1024, f'{platform} encode exceeds 1.5 MiB'
+
+          android_encode = root / encodes['android']['path']
+          assert android_encode == root / 'android/app/src/main/res/raw/bgm.ogg', 'android encode path moved'
+
+          for icon in [
+              'android/app/src/main/res/mipmap-anydpi/ic_launcher.xml',
+              'android/app/src/main/res/mipmap-anydpi/ic_launcher_round.xml',
+              'android/app/src/main/res/drawable/ic_glass_pulse_foreground.xml',
+              'android/app/src/main/res/drawable/ic_glass_pulse_monochrome.xml',
+          ]:
+              assert (root / icon).exists(), f'icon resource missing: {icon}'
+
+          for icon_xml in [
+              root / 'android/app/src/main/res/mipmap-anydpi/ic_launcher.xml',
+              root / 'android/app/src/main/res/mipmap-anydpi/ic_launcher_round.xml',
+          ]:
+              content = icon_xml.read_text(encoding='utf-8')
+              assert 'adaptive-icon' in content, f'{icon_xml} is not an adaptive icon'
+              assert 'monochrome' in content, f'{icon_xml} lacks a monochrome layer'
+
+          print('Music provenance and icon resource assertions passed.')
+          PY
+
       - name: Upload lint reports
         if: always()
         uses: actions/upload-artifact@v4

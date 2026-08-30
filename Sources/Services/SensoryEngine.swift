@@ -80,29 +80,28 @@ final class SensoryEngine {
     @ObservationIgnored private var continuousPlayer: CHHapticAdvancedPatternPlayer?
     @ObservationIgnored private var lastProximityUpdate: Date?
     @ObservationIgnored private var audioInterruptionObserver: NSObjectProtocol?
-
-    var soundEnabled = true {
-        didSet {
-            if !soundEnabled {
-                eventNode.stop()
-                audioEngine.pause()
-            }
-        }
-    }
-
-    var hapticsEnabled = true {
-        didSet {
-            if !hapticsEnabled { stopContinuousHaptic() }
-        }
-    }
+    @ObservationIgnored private weak var settings: GameSettings?
 
     private(set) var lastError: SensoryError?
     private(set) var supportsAdaptiveHaptics = false
 
-    init() {
+    var soundEnabled: Bool { settings?.soundEnabled ?? true }
+    var hapticsEnabled: Bool { settings?.hapticsEnabled ?? true }
+
+    init(settings: GameSettings? = nil) {
+        self.settings = settings
         configureAudioGraph()
         configureHaptics()
         observeAudioInterruptions()
+    }
+
+    func applySettings(_ settings: GameSettings) {
+        self.settings = settings
+        if !settings.hapticsEnabled { stopContinuousHaptic() }
+        if !settings.soundEnabled {
+            eventNode.stop()
+            audioEngine.pause()
+        }
     }
 
     var client: SensoryClient {
