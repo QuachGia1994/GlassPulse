@@ -77,10 +77,6 @@ final class GameSettingsTests: XCTestCase {
     }
 
     func testEveryNewSettingsKeyIsPresentInAllFourLocales() throws {
-        let url = Bundle.main.url(forResource: "Localizable", withExtension: "xcstrings")
-            ?? Bundle(for: GameSettingsTests.self).url(forResource: "Localizable", withExtension: "xcstrings")
-        let catalogURL = try XCTUnwrap(url, "Localizable.xcstrings must ship with the test host")
-        let catalog = try JSONDecoder().decode(StringsCatalog.self, from: Data(contentsOf: catalogURL))
         let required: Set<String> = [
             "settings.title", "settings.section.audio", "settings.section.feedback",
             "settings.section.display", "settings.section.language", "settings.section.credit",
@@ -92,28 +88,24 @@ final class GameSettingsTests: XCTestCase {
             "settings.language.zhHans", "settings.music.credit", "settings.open.label",
             "settings.close.label"
         ]
-        for key in required {
-            let entry = try XCTUnwrap(catalog.strings[key], "missing key \(key)")
-            for locale in ["en", "vi", "ja", "zh-Hans"] {
-                XCTAssertNotNil(
-                    entry.localizations[locale],
-                    "key \(key) missing locale \(locale)"
+        for locale in ["en", "vi", "ja", "zh-Hans"] {
+            let bundle = try localizationBundle(for: locale)
+            for key in required {
+                let value = bundle.localizedString(
+                    forKey: key,
+                    value: "__MISSING__",
+                    table: nil
                 )
+                XCTAssertNotEqual(value, "__MISSING__", "key \(key) missing locale \(locale)")
             }
         }
     }
-}
 
-private struct StringsCatalog: Decodable {
-    struct Entry: Decodable {
-        let localizations: [String: Localization]
+    private func localizationBundle(for locale: String) throws -> Bundle {
+        let path = try XCTUnwrap(
+            Bundle.main.path(forResource: locale, ofType: "lproj"),
+            "compiled locale \(locale) must ship with the app"
+        )
+        return try XCTUnwrap(Bundle(path: path))
     }
-    struct Localization: Decodable {
-        let stringUnit: StringUnit
-    }
-    struct StringUnit: Decodable {
-        let state: String
-        let value: String
-    }
-    let strings: [String: Entry]
 }

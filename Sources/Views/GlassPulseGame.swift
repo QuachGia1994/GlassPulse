@@ -573,7 +573,7 @@ struct GlassPulseGame: View {
         session: GameSessionContext,
         startImmediately: Bool
     ) {
-        let replacement = GameEngine(session: session)
+        let replacement = makeReplacementEngine(session: session)
         replacement.connectSensory(sensory.client)
         engine = replacement
         didRecordCurrentRun = false
@@ -581,6 +581,28 @@ struct GlassPulseGame: View {
         guard startImmediately else { return }
         engine.handleTap()
         handleStateChange(engine.state)
+    }
+
+    private func makeReplacementEngine(
+        session: GameSessionContext
+    ) -> GameEngine {
+#if DEBUG
+        let isGameOverUITest = ProcessInfo.processInfo.arguments.contains(
+            "--ui-testing-game-over"
+        )
+        guard isGameOverUITest else {
+            return GameEngine(session: session)
+        }
+        let scenario = GameScenario(
+            ballAngle: -Double.pi / 2,
+            direction: 1,
+            obstacles: [],
+            gem: Gem(angle: .pi / 2)
+        )
+        return GameEngine(scenario: scenario, session: session)
+#else
+        return GameEngine(session: session)
+#endif
     }
 
     private func handleStateChange(_ state: GameState) {

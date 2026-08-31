@@ -75,13 +75,13 @@ struct GlassPulseApp: App {
 }
 
 private struct AppLocaleEnvironment: ViewModifier {
+    @Environment(\.locale) private var systemLocale
     let settings: GameSettings
 
     func body(content: Content) -> some View {
-        if let locale = settings.resolvedLocale {
-            content.environment(\.locale, locale)
-        } else {
-            content
-        }
+        content.environment(
+            \.locale,
+            settings.resolvedLocale ?? systemLocale
+        )
     }
 }
